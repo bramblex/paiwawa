@@ -10,3 +10,7 @@ Downloaded on 2026-08-26. All four files are released under CC0 / Public Domain 
 | `sfx/fail-jingle.ogg` | Failed composition feedback | [Total Fail — OpenGameArt](https://opengameart.org/content/total-fail) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
 
 The filenames were normalized after download; the audio content was not edited.
+
+## Generated voice
+
+`voice/yaoyao-leading.mp3` was synthesized locally on 2026-08-26 with the macOS Mandarin male `Reed` voice at 170 words per minute, then normalized and encoded as MP3 with FFmpeg. Its exact generation metadata and checksum are recorded in `voice/yaoyao-leading.provenance.json`.

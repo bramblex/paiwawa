@@ -1,5 +1,9 @@
 import type { CompositionResult } from './game/alignment';
 
+const successResultImageUrl = '/assets/results/public-toilet-sign-removed-success.png';
+const successResultTitle = '路牌已成功拆除';
+const resultTitleTypingInterval = 95;
+
 const cameraIcon = `
   <svg viewBox="0 0 32 32" aria-hidden="true">
     <path d="M4.5 10.5h5l1.8-3h9.4l1.8 3h5a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-23a2 2 0 0 1-2-2v-12a2 2 0 0 1 2-2Z" />
@@ -31,8 +35,11 @@ export interface GameUI {
   startButton: HTMLButtonElement;
   shutterButton: HTMLButtonElement;
   audioButton: HTMLButtonElement;
+  judgementRetakeButton: HTMLButtonElement;
+  judgementContinueButton: HTMLButtonElement;
   resultContinueButton: HTMLButtonElement;
   resetButton: HTMLButtonElement;
+  judgementOverlay: HTMLElement;
   resultOverlay: HTMLElement;
   mobileMoveButtons: HTMLButtonElement[];
   setLoading: (ratio: number, label?: string) => void;
@@ -41,8 +48,10 @@ export interface GameUI {
   enterGame: () => void;
   setPointerLocked: (locked: boolean) => void;
   setMuted: (muted: boolean) => void;
-  showResult: (imageDataUrl: string, result: CompositionResult) => void;
-  hideResult: () => void;
+  showJudgement: (imageDataUrl: string, result: CompositionResult) => void;
+  hideJudgement: () => void;
+  showSettlement: (result: CompositionResult) => void;
+  hideSettlement: () => void;
 }
 
 export function createGameUI(root: HTMLElement): GameUI {
@@ -50,7 +59,6 @@ export function createGameUI(root: HTMLElement): GameUI {
     <main class="game-shell">
       <section class="loading-screen" aria-live="polite">
         <div class="loading-brand">
-          <span class="loading-index">PHOTO PUZZLE / 01</span>
           <span class="loading-title">拍哇哇</span>
         </div>
         <div class="loading-track" aria-hidden="true"><span class="loading-fill"></span></div>
@@ -59,11 +67,9 @@ export function createGameUI(root: HTMLElement): GameUI {
 
       <section class="intro" aria-labelledby="intro-title">
         <div class="intro-copy">
-          <p class="eyebrow">摄影任务 · 01</p>
           <h1 id="intro-title">拍哇<br />哇</h1>
           <p class="intro-lead">找到那个刚刚好的位置，让厕所路牌的箭头指向楼顶的 <strong>WAWA</strong>。</p>
           <div class="brief-line" aria-label="任务目标">
-            <span class="brief-number">01</span>
             <span>两块牌都要入镜<br />WAWA 要落在箭头下方</span>
           </div>
           <button class="start-button" type="button" disabled>
@@ -72,12 +78,11 @@ export function createGameUI(root: HTMLElement): GameUI {
           </button>
           <p class="start-note">桌面：WASD 移动 · 鼠标转向 · 空格拍照</p>
         </div>
-        <div class="intro-rule" aria-hidden="true"><span>FRAME 01</span></div>
+        <div class="intro-rule" aria-hidden="true"><span>FRAME</span></div>
       </section>
 
       <section class="hud" aria-label="拍照界面">
         <div class="objective">
-          <span class="objective-kicker">当前任务</span>
           <span class="objective-text">让箭头指向 WAWA</span>
         </div>
         <button class="audio-toggle" type="button" aria-label="关闭声音" aria-pressed="false">
@@ -87,6 +92,14 @@ export function createGameUI(root: HTMLElement): GameUI {
         <div class="lock-hint" aria-live="polite">
           <span class="lock-dot"></span>
           <span class="lock-copy">点击锁定 · 拖动转向</span>
+        </div>
+        <div class="viewfinder" aria-hidden="true">
+          <span class="viewfinder-corner viewfinder-corner--tl"></span>
+          <span class="viewfinder-corner viewfinder-corner--tr"></span>
+          <span class="viewfinder-corner viewfinder-corner--bl"></span>
+          <span class="viewfinder-corner viewfinder-corner--br"></span>
+          <span class="viewfinder-center"></span>
+          <span class="viewfinder-readout">FRAME · 16:9</span>
         </div>
         <div class="desktop-controls" aria-hidden="true">
           <span><kbd>WASD</kbd> 移动</span>
@@ -110,12 +123,29 @@ export function createGameUI(root: HTMLElement): GameUI {
 
       <div class="flash" aria-hidden="true"></div>
 
-      <section class="result-overlay" aria-live="polite" aria-label="拍照结果">
+      <section class="judgement-overlay" aria-live="polite" aria-label="构图判定" aria-hidden="true">
+        <article class="judgement-card">
+          <div class="judgement-photo-frame">
+            <img class="judgement-image" src="/assets/signs/public-toilet-450m-front-texture.png" alt="本次拍摄的街景" />
+          </div>
+          <div class="judgement-copy">
+            <span class="judgement-kicker">本次照片判定</span>
+            <h2 class="judgement-title">正在判定</h2>
+            <p class="judgement-hint"></p>
+            <div class="judgement-meter" aria-hidden="true"><span></span></div>
+            <div class="judgement-actions">
+              <button class="judgement-retake" type="button">重拍</button>
+              <button class="judgement-continue" type="button">继续</button>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="result-overlay" aria-live="polite" aria-label="拍照结果" aria-hidden="true">
         <article class="contact-sheet">
-          <div class="photo-frame"><img class="result-image" src="/assets/signs/public-toilet-450m-front-texture.png" alt="刚刚拍摄的街景" /></div>
+          <div class="photo-frame"><img class="result-image" src="${successResultImageUrl}" alt="工作人员正在拆除公共厕所路牌" /></div>
           <div class="result-copy">
-            <p class="result-index">CONTACT / 001</p>
-            <h2 class="result-title">再找找角度</h2>
+            <h2 class="result-title">${successResultTitle}</h2>
             <p class="result-hint"></p>
             <div class="result-meter" aria-hidden="true"><span></span></div>
             <div class="result-actions">
@@ -136,6 +166,13 @@ export function createGameUI(root: HTMLElement): GameUI {
   const startButton = requiredElement<HTMLButtonElement>(root, '.start-button');
   const shutterButton = requiredElement<HTMLButtonElement>(root, '.shutter');
   const audioButton = requiredElement<HTMLButtonElement>(root, '.audio-toggle');
+  const judgementOverlay = requiredElement<HTMLElement>(root, '.judgement-overlay');
+  const judgementImage = requiredElement<HTMLImageElement>(root, '.judgement-image');
+  const judgementTitle = requiredElement<HTMLElement>(root, '.judgement-title');
+  const judgementHint = requiredElement<HTMLElement>(root, '.judgement-hint');
+  const judgementMeter = requiredElement<HTMLElement>(root, '.judgement-meter span');
+  const judgementRetakeButton = requiredElement<HTMLButtonElement>(root, '.judgement-retake');
+  const judgementContinueButton = requiredElement<HTMLButtonElement>(root, '.judgement-continue');
   const resultOverlay = requiredElement<HTMLElement>(root, '.result-overlay');
   const resultImage = requiredElement<HTMLImageElement>(root, '.result-image');
   const resultTitle = requiredElement<HTMLElement>(root, '.result-title');
@@ -146,13 +183,54 @@ export function createGameUI(root: HTMLElement): GameUI {
   const lockHint = requiredElement<HTMLElement>(root, '.lock-hint');
   const flash = requiredElement<HTMLElement>(root, '.flash');
   const mobileMoveButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-move-x]'));
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  let resultTitleTypingTimer: number | null = null;
+
+  const stopResultTitleTyping = (): void => {
+    if (resultTitleTypingTimer !== null) {
+      window.clearTimeout(resultTitleTypingTimer);
+      resultTitleTypingTimer = null;
+    }
+    resultTitle.classList.remove('is-typing');
+  };
+
+  const setResultTitle = (text: string, typeText: boolean): void => {
+    stopResultTitleTyping();
+    resultTitle.setAttribute('aria-label', text);
+
+    if (!typeText || reducedMotion.matches) {
+      resultTitle.textContent = text;
+      return;
+    }
+
+    let visibleCharacters = 1;
+    resultTitle.textContent = text.slice(0, visibleCharacters);
+    resultTitle.classList.add('is-typing');
+
+    const typeNextCharacter = (): void => {
+      visibleCharacters += 1;
+      resultTitle.textContent = text.slice(0, visibleCharacters);
+
+      if (visibleCharacters < text.length) {
+        resultTitleTypingTimer = window.setTimeout(typeNextCharacter, resultTitleTypingInterval);
+      } else {
+        resultTitleTypingTimer = null;
+        resultTitle.classList.remove('is-typing');
+      }
+    };
+
+    resultTitleTypingTimer = window.setTimeout(typeNextCharacter, resultTitleTypingInterval);
+  };
 
   return {
     startButton,
     shutterButton,
     audioButton,
+    judgementRetakeButton,
+    judgementContinueButton,
     resultContinueButton,
     resetButton,
+    judgementOverlay,
     resultOverlay,
     mobileMoveButtons,
     setLoading: (ratio, label) => {
@@ -187,19 +265,43 @@ export function createGameUI(root: HTMLElement): GameUI {
       audioButton.setAttribute('aria-label', muted ? '打开声音' : '关闭声音');
       requiredElement<HTMLElement>(audioButton, '.audio-toggle-label').textContent = muted ? '静音' : '声音';
     },
-    showResult: (imageDataUrl, result) => {
-      resultImage.src = imageDataUrl;
-      resultTitle.textContent = result.success ? '构图成立' : '再找找角度';
-      resultHint.textContent = result.hint;
-      resultMeter.style.transform = `scaleX(${Math.max(0.08, result.score)})`;
-      resultOverlay.classList.toggle('is-success', result.success);
-      resultOverlay.classList.add('is-visible');
+    showJudgement: (imageDataUrl, result) => {
+      stopResultTitleTyping();
+      resultOverlay.classList.remove('is-visible', 'is-success');
+      resultOverlay.setAttribute('aria-hidden', 'true');
+      judgementImage.src = imageDataUrl;
+      judgementTitle.textContent = result.success ? '拍照成功' : '拍照未成功';
+      judgementHint.textContent = result.hint;
+      judgementMeter.style.transform = `scaleX(${Math.max(0.08, result.score)})`;
+      judgementOverlay.classList.toggle('is-success', result.success);
+      judgementOverlay.classList.add('is-visible');
+      judgementOverlay.setAttribute('aria-hidden', 'false');
       flash.classList.remove('is-firing');
       void flash.offsetWidth;
       flash.classList.add('is-firing');
+      window.requestAnimationFrame(() => judgementContinueButton.focus());
     },
-    hideResult: () => {
-      resultOverlay.classList.remove('is-visible');
+    hideJudgement: () => {
+      judgementOverlay.classList.remove('is-visible', 'is-success');
+      judgementOverlay.setAttribute('aria-hidden', 'true');
+    },
+    showSettlement: (result) => {
+      judgementOverlay.classList.remove('is-visible', 'is-success');
+      judgementOverlay.setAttribute('aria-hidden', 'true');
+      resultImage.src = successResultImageUrl;
+      resultImage.alt = '工作人员正在拆除公共厕所路牌';
+      setResultTitle(successResultTitle, true);
+      resultHint.textContent = result.hint;
+      resultMeter.style.transform = `scaleX(${Math.max(0.08, result.score)})`;
+      resultOverlay.classList.add('is-success');
+      resultOverlay.classList.add('is-visible');
+      resultOverlay.setAttribute('aria-hidden', 'false');
+      window.requestAnimationFrame(() => resultContinueButton.focus());
+    },
+    hideSettlement: () => {
+      stopResultTitleTyping();
+      resultOverlay.classList.remove('is-visible', 'is-success');
+      resultOverlay.setAttribute('aria-hidden', 'true');
     },
   };
 }

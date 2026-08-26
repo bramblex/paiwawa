@@ -20,13 +20,14 @@ Create a compact playable photography puzzle in which the player walks through a
 
 ## Positioning
 
-The puzzle is solved through perspective, not through inventory, dialogue, or a visible alignment overlay. The street itself is the interface; the camera frame is the puzzle board.
+The puzzle is solved through perspective, not through inventory, dialogue, or a target-aware alignment overlay. A neutral camera frame supports composition, while the street remains the puzzle board.
 
 ## Operating Context
 
 - A single browser session lasting a few minutes.
 - Desktop controls use keyboard movement, mouse look, and a dedicated shutter action.
 - Touch controls remain available on narrow screens.
+- The player can explore the full street segment, including the distant toilet and the WAWA building area, while remaining inside the authored roadside bounds.
 - The first scene is a self-contained vertical slice rather than a level editor or production content pipeline.
 - Music starts only after the player explicitly begins the game, with a persistent in-session mute control.
 
@@ -36,7 +37,7 @@ The puzzle is solved through perspective, not through inventory, dialogue, or a 
 - Use the approved square WAWA bamboo-cicada lightbox asset, preserving the exact `WAWA` spelling.
 - Use the locally imported CC0 Kenney road and building GLB assets.
 - Judge the photo in screen space: both signs must be visible, WAWA must sit below the toilet sign, and the toilet arrow must point toward the WAWA sign.
-- Do not show a persistent alignment reticle or live solution meter. Feedback appears only after the shutter is pressed.
+- Show a neutral responsive viewfinder with corner marks and a center crosshair, but never let it react to or reveal the solution. Feedback appears only after the shutter is pressed.
 - Keep the scene small enough to load quickly in a modern browser.
 - A distant public-toilet building may enrich the street story, but it is not a photography target and must not obstruct the road or sidewalk.
 - BGM and feedback sounds are bundled locally from verified CC0 sources.

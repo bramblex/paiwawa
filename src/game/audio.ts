@@ -12,6 +12,7 @@ export interface AudioState {
   shutterTime: number;
   successTime: number;
   failTime: number;
+  greetingTime: number;
 }
 
 const createTrack = (
@@ -33,12 +34,13 @@ export class GameAudio {
   private readonly shutter = createTrack('/assets/audio/sfx/camera-shutter.ogg', 0.62, 'auto');
   private readonly success = createTrack('/assets/audio/sfx/success-jingle.ogg', 0.44, 'auto');
   private readonly fail = createTrack('/assets/audio/sfx/fail-jingle.ogg', 0.28, 'auto');
+  private readonly greeting = createTrack('/assets/audio/voice/yaoyao-leading.mp3', 0.78, 'auto');
   private readonly tracks: AudioTrack[];
   private hasStarted = false;
   private mutedState = false;
 
   constructor() {
-    this.tracks = [this.bgm, this.shutter, this.success, this.fail];
+    this.tracks = [this.bgm, this.shutter, this.success, this.fail, this.greeting];
     this.bgm.element.loop = true;
     this.bgm.element.addEventListener('error', this.onAudioError);
     document.addEventListener('visibilitychange', this.onVisibilityChange);
@@ -57,6 +59,7 @@ export class GameAudio {
       shutterTime: this.shutter.element.currentTime,
       successTime: this.success.element.currentTime,
       failTime: this.fail.element.currentTime,
+      greetingTime: this.greeting.element.currentTime,
     };
   }
 
@@ -91,6 +94,10 @@ export class GameAudio {
 
   playFail(): void {
     this.playEffect(this.fail);
+  }
+
+  playGreeting(): void {
+    this.playEffect(this.greeting);
   }
 
   dispose(): void {

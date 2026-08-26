@@ -10,6 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@fontsource/zcool-qingke-huangyou": "^5.3.0",
     "three": "^0.185.1"
   },
   "devDependencies": {

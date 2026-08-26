@@ -21,6 +21,8 @@ npm run dev
 - `M`：打开或关闭声音
 - 触屏：左下方向键移动，拖动画面转向，右下快门拍照
 
+移动边界覆盖整段街区，可以走到远处厕所和 WAWA 大楼附近继续寻找机位。HUD 的取景框只帮助构图，不会提示是否已经对准答案。
+
 ## 玩法判定
 
 拍照时会在屏幕空间检查：
@@ -37,3 +39,4 @@ npm run dev
 - 道路与建筑：Kenney City Kit，CC0。来源和许可见 `public/assets/models/SOURCES.md` 与 `public/assets/licenses/`。
 - 两张灯牌贴图的来源记录位于相邻的 `*.provenance.json` 文件。
 - BGM、快门、成功与失败音效：OpenGameArt，CC0。来源见 `public/assets/audio/CREDITS.md`。
+- 展示字体：ZCOOL QingKe HuangYou，经 Fontsource 本地打包，OFL-1.1。

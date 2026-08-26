@@ -1,0 +1,14 @@
+{
+  "asset": "yaoyao-leading.mp3",
+  "createdAt": "2026-08-26",
+  "generator": "macOS say",
+  "voice": "Reed (中文（中国大陆）, zh_CN)",
+  "text": "遥遥领先",
+  "rateWordsPerMinute": 170,
+  "conversion": "ffmpeg libmp3lame q4 with loudnorm I=-17 TP=-1.5 LRA=7",
+  "codec": "MP3",
+  "sampleRateHz": 48000,
+  "channels": 1,
+  "durationSeconds": 1.358563,
+  "sha256": "1ca611fad5343024275a1d8cad97b4c108bdad8749996644641147d2dbd6eb22"
+}

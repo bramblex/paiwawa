@@ -14,6 +14,8 @@ export interface FirstPersonControlsOptions {
 
 type TouchMove = { x: number; z: number };
 
+const GROUND_UP = new THREE.Vector3(0, 1, 0);
+
 /** Small, dependency-free first-person controller for the game's camera. */
 export class FirstPersonControls {
   readonly camera: THREE.PerspectiveCamera;
@@ -29,6 +31,8 @@ export class FirstPersonControls {
   private readonly lockElement?: HTMLElement;
   private readonly keys = new Set<string>();
   private touchMove: TouchMove = { x: 0, z: 0 };
+  private readonly movementForward = new THREE.Vector3();
+  private readonly movementRight = new THREE.Vector3();
   private yaw: number;
   private pitch: number;
   private pointerLocked = false;
@@ -130,8 +134,22 @@ export class FirstPersonControls {
     const length = Math.hypot(strafe, forward);
     if (length > 1) { strafe /= length; forward /= length; }
     const speed = this.moveSpeed * (this.keys.has('ShiftLeft') || this.keys.has('ShiftRight') ? this.sprintMultiplier : 1);
-    this.camera.position.x += (Math.cos(this.yaw) * strafe + Math.sin(this.yaw) * forward) * speed * delta;
-    this.camera.position.z += (Math.sin(this.yaw) * strafe - Math.cos(this.yaw) * forward) * speed * delta;
+    if (strafe !== 0 || forward !== 0) {
+      // Derive the ground-plane basis from the camera itself so movement stays
+      // aligned after lookAt(), mouse turns, touch turns, or an anchored camera.
+      this.movementForward.set(0, 0, -1).applyQuaternion(this.camera.quaternion);
+      this.movementForward.y = 0;
+      if (this.movementForward.lengthSq() < 1e-8) {
+        this.movementForward.set(-Math.sin(this.yaw), 0, -Math.cos(this.yaw));
+      } else {
+        this.movementForward.normalize();
+      }
+      this.movementRight.crossVectors(this.movementForward, GROUND_UP).normalize();
+
+      const step = speed * delta;
+      this.camera.position.addScaledVector(this.movementForward, forward * step);
+      this.camera.position.addScaledVector(this.movementRight, strafe * step);
+    }
     if (this.bounds) {
       this.camera.position.x = THREE.MathUtils.clamp(this.camera.position.x, this.bounds.minX, this.bounds.maxX);
       this.camera.position.z = THREE.MathUtils.clamp(this.camera.position.z, this.bounds.minZ, this.bounds.maxZ);

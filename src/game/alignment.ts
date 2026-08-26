@@ -167,7 +167,7 @@ const getThresholds = (
     maximumGap: Math.max(
       34,
       wawei.height * 0.42,
-      viewport.height * 0.075,
+      viewport.height * 0.08,
     ),
     // "Below the toilet sign" is a separate semantic rule from the arrow gap.
     // Requiring a small gap under the toilet rectangle keeps the visual read

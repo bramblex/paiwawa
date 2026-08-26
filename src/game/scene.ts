@@ -429,7 +429,7 @@ export async function createStreetScene(
   waweiGroup.add(waweiGlow);
 
   const toiletGroup = new THREE.Group();
-  toiletGroup.position.set(-3.9, 0, 1.0);
+  toiletGroup.position.set(-4.25, 0, 1.0);
   const toiletWidth = 4.35;
   const toiletHeight = toiletWidth * (483 / 1843);
   const toiletY = 4.25;

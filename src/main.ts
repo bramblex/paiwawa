@@ -1,10 +1,12 @@
 import * as THREE from 'three';
+import '@fontsource/zcool-qingke-huangyou/chinese-simplified-400.css';
 
 import { evaluateComposition, type CompositionResult } from './game/alignment';
 import { GameAudio } from './game/audio';
 import { FirstPersonControls } from './game/controls';
 import { projectObjectBounds, projectObjectPoint } from './game/projection';
 import { createStreetScene, type StreetLandmarks } from './game/scene';
+import { createStreetLife, type StreetLife } from './game/street-life';
 import './styles.css';
 import { createGameUI } from './ui';
 
@@ -59,16 +61,18 @@ const controls = new FirstPersonControls(camera, {
   sprintMultiplier: 1.65,
   lookSensitivity: 0.00215,
   cameraHeight: 1.65,
-  bounds: { minX: -6.2, maxX: 4.1, minZ: -2.2, maxZ: 12 },
+  bounds: { minX: -7.4, maxX: 5.8, minZ: -27.5, maxZ: 14.5 },
 });
 
 const timer = new THREE.Timer();
 timer.connect(document);
 const coarsePointer = window.matchMedia('(pointer: coarse)').matches;
 let landmarks: StreetLandmarks | null = null;
+let streetLife: StreetLife | null = null;
 let ready = false;
 let started = false;
-let resultOpen = false;
+let photoStage: 'playing' | 'judging' | 'settled' = 'playing';
+let pendingCapture: { photo: string; result: CompositionResult } | null = null;
 
 const resetPlayer = (): void => {
   if (!landmarks) return;
@@ -76,8 +80,34 @@ const resetPlayer = (): void => {
   controls.lookAt(landmarks.startLookTarget);
 };
 
+const addStreetLife = (): void => {
+  streetLife = createStreetLife({
+    seed: 0x50415741,
+    pedestrianCount: 4,
+    carCount: 3,
+    palette: 'sunset',
+    style: {
+      maxZ: 4.5,
+      pedestrianSpeed: 0.48,
+      pedestrianScale: 0.92,
+      carSpeed: 1.35,
+      carScale: 0.86,
+      carLoopPadding: 1.2,
+      sidewalkX: [-4.95, 4.95],
+    },
+    greeting: {
+      text: '遥遥领先',
+      triggerRadius: 5.4,
+      durationSeconds: 2.5,
+      cooldownSeconds: 6,
+      onSpeak: () => audio.playGreeting(),
+    },
+  });
+  scene.add(streetLife.root);
+};
+
 const takePhoto = (): CompositionResult | null => {
-  if (!ready || !started || resultOpen || !landmarks) return null;
+  if (!ready || !started || photoStage !== 'playing' || !landmarks) return null;
 
   renderer.render(scene, camera);
   const viewport = {
@@ -92,20 +122,36 @@ const takePhoto = (): CompositionResult | null => {
   });
 
   audio.playShutter();
-  window.setTimeout(() => {
-    if (result.success) audio.playSuccess();
-    else audio.playFail();
-  }, 180);
-  resultOpen = true;
-  if (document.pointerLockElement) void document.exitPointerLock();
+  if (result.success) audio.playSuccess();
+  else audio.playFail();
+  photoStage = 'judging';
   const photo = renderer.domElement.toDataURL('image/jpeg', 0.9);
-  ui.showResult(photo, result);
+  pendingCapture = { photo, result };
+  if (document.pointerLockElement) void document.exitPointerLock();
+  ui.showJudgement(photo, result);
   return result;
 };
 
 const resumeGame = (): void => {
-  resultOpen = false;
-  ui.hideResult();
+  pendingCapture = null;
+  photoStage = 'playing';
+  ui.hideJudgement();
+  ui.hideSettlement();
+  renderer.domElement.focus();
+};
+
+const resolveJudgement = (): void => {
+  if (photoStage !== 'judging' || !pendingCapture) return;
+
+  if (!pendingCapture.result.success) {
+    resumeGame();
+    return;
+  }
+
+  const result = pendingCapture.result;
+  pendingCapture = null;
+  photoStage = 'settled';
+  ui.showSettlement(result);
 };
 
 ui.startButton.addEventListener('click', () => {
@@ -126,6 +172,8 @@ ui.audioButton.addEventListener('click', (event) => {
   ui.setMuted(audio.toggleMuted());
 });
 
+ui.judgementRetakeButton.addEventListener('click', resumeGame);
+ui.judgementContinueButton.addEventListener('click', resolveJudgement);
 ui.resultContinueButton.addEventListener('click', resumeGame);
 ui.resetButton.addEventListener('click', () => {
   resetPlayer();
@@ -138,7 +186,7 @@ renderer.domElement.addEventListener('click', () => {
     suppressCanvasClick = false;
     return;
   }
-  if (started && ready && !resultOpen && !coarsePointer && !controls.isLocked) controls.lock();
+  if (started && ready && photoStage === 'playing' && !coarsePointer && !controls.isLocked) controls.lock();
 });
 
 document.addEventListener('pointerlockchange', () => {
@@ -146,11 +194,11 @@ document.addEventListener('pointerlockchange', () => {
 });
 
 window.addEventListener('keydown', (event) => {
-  if (event.code === 'Space' && !event.repeat && started && !resultOpen) {
+  if (event.code === 'Space' && !event.repeat && started && photoStage === 'playing') {
     event.preventDefault();
     takePhoto();
   }
-  if (event.code === 'KeyR' && started && !event.repeat) {
+  if (event.code === 'KeyR' && started && !event.repeat && photoStage === 'playing') {
     event.preventDefault();
     resetPlayer();
   }
@@ -183,7 +231,7 @@ let lastLookX = 0;
 let lastLookY = 0;
 let lookDragDistance = 0;
 renderer.domElement.addEventListener('pointerdown', (event) => {
-  if (!started || resultOpen || controls.isLocked) return;
+  if (!started || photoStage !== 'playing' || controls.isLocked) return;
   lookPointerId = event.pointerId;
   lastLookX = event.clientX;
   lastLookY = event.clientY;
@@ -219,7 +267,8 @@ const animate = (timestamp?: number): void => {
   requestAnimationFrame(animate);
   timer.update(timestamp);
   const delta = timer.getDelta();
-  if (started && !resultOpen) controls.update(delta);
+  if (started && photoStage === 'playing') controls.update(delta);
+  streetLife?.update(delta, started && photoStage === 'playing' ? camera.position : undefined);
   renderer.render(scene, camera);
 };
 animate();
@@ -229,6 +278,7 @@ void createStreetScene(scene, renderer, {
 })
   .then((loadedLandmarks) => {
     landmarks = loadedLandmarks;
+    addStreetLife();
     resetPlayer();
     ready = true;
     ui.setReady();
@@ -253,5 +303,9 @@ window.addEventListener('beforeunload', () => {
   audio.dispose();
   controls.dispose();
   timer.dispose();
+  if (streetLife) {
+    streetLife.root.removeFromParent();
+    streetLife.dispose();
+  }
   renderer.dispose();
 });
