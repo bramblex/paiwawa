@@ -437,7 +437,7 @@ const updateSecurityAlert = (deltaSeconds: number): void => {
     height: renderer.domElement.clientHeight,
   };
   const snapshot = securityTracker.update(
-    projectObjectBounds(landmarks.waweiFace, camera, viewport),
+    projectObjectBounds(landmarks.toiletFace, camera, viewport),
     viewport,
     deltaSeconds,
   );

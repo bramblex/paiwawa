@@ -800,10 +800,9 @@ const addSecurityGuard = (
   guard.add(cap);
   addBox(guard, [0.45, 0.05, 0.24], [0, 2.31, 0.17], darkNavy);
 
-  const targetX = level.targetBuilding.position[0];
-  const side = targetX < 0 ? -1 : 1;
-  guard.position.set(side * 5.45, 0.16, level.targetBuilding.position[2] + 4.2);
-  guard.lookAt(0, 1.25, level.toiletSign.position[2]);
+  const toiletSignPosition = tupleToVector(level.toiletSign.position);
+  guard.position.set(toiletSignPosition.x, 0.16, toiletSignPosition.z + 0.65);
+  guard.lookAt(0, guard.position.y, toiletSignPosition.z + 0.65);
   guard.scale.setScalar(1.06);
   parent.add(guard);
   return guard;

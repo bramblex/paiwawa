@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "tsc --noEmit && vite build",
+    "postbuild": "chmod -R a+rX dist",
     "preview": "vite preview --host 127.0.0.1",
     "test": "vitest run"
   },

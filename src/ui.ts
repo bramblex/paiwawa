@@ -113,7 +113,7 @@ export function createGameUI(root: HTMLElement): GameUI {
         <div class="security-alert" role="meter" aria-label="保安警戒" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-hidden="true">
           <div class="security-alert-copy">
             <span>保安警戒</span>
-            <strong>不要长时间对准灯牌</strong>
+            <strong>镜头正对公共厕所路牌时持续上升</strong>
           </div>
           <div class="security-alert-track" aria-hidden="true"><span></span></div>
         </div>

@@ -364,7 +364,7 @@ button:focus-visible {
 
 .security-alert {
   position: absolute;
-  top: max(24px, env(safe-area-inset-top));
+  top: max(78px, calc(env(safe-area-inset-top) + 54px));
   left: 50%;
   z-index: 4;
   display: none;
