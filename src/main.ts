@@ -4,6 +4,7 @@ import '@fontsource/zcool-qingke-huangyou/chinese-simplified-400.css';
 import { evaluateComposition, type CompositionResult } from './game/alignment';
 import { GameAudio } from './game/audio';
 import { FirstPersonControls } from './game/controls';
+import { GyroAimControls } from './game/gyro-aim';
 import { projectObjectBounds, projectObjectPoint } from './game/projection';
 import { createStreetScene, type StreetLandmarks } from './game/scene';
 import { createStreetLife, type StreetLife } from './game/street-life';
@@ -67,6 +68,8 @@ const controls = new FirstPersonControls(camera, {
 const timer = new THREE.Timer();
 timer.connect(document);
 const coarsePointer = window.matchMedia('(pointer: coarse)').matches;
+const gyro = new GyroAimControls(controls, { onStateChange: ui.setGyroState });
+ui.setGyroState(gyro.currentState);
 let landmarks: StreetLandmarks | null = null;
 let streetLife: StreetLife | null = null;
 let ready = false;
@@ -78,6 +81,7 @@ const resetPlayer = (): void => {
   if (!landmarks) return;
   camera.position.copy(landmarks.startPosition);
   controls.lookAt(landmarks.startLookTarget);
+  gyro.recenter();
 };
 
 const addStreetLife = (): void => {
@@ -137,6 +141,7 @@ const resumeGame = (): void => {
   photoStage = 'playing';
   ui.hideJudgement();
   ui.hideSettlement();
+  gyro.recenter();
   renderer.domElement.focus();
 };
 
@@ -159,6 +164,7 @@ ui.startButton.addEventListener('click', () => {
   started = true;
   audio.start();
   ui.enterGame();
+  if (coarsePointer && gyro.isSupported) void gyro.enable();
   renderer.domElement.focus();
 });
 
@@ -170,6 +176,12 @@ ui.shutterButton.addEventListener('click', (event) => {
 ui.audioButton.addEventListener('click', (event) => {
   event.stopPropagation();
   ui.setMuted(audio.toggleMuted());
+});
+
+ui.gyroButton.addEventListener('click', (event) => {
+  event.stopPropagation();
+  if (gyro.currentState === 'active') gyro.recenter();
+  else void gyro.enable();
 });
 
 ui.judgementRetakeButton.addEventListener('click', resumeGame);
@@ -267,7 +279,10 @@ const animate = (timestamp?: number): void => {
   requestAnimationFrame(animate);
   timer.update(timestamp);
   const delta = timer.getDelta();
-  if (started && photoStage === 'playing') controls.update(delta);
+  if (started && photoStage === 'playing') {
+    gyro.update(delta);
+    controls.update(delta);
+  }
   streetLife?.update(delta, started && photoStage === 'playing' ? camera.position : undefined);
   renderer.render(scene, camera);
 };
@@ -301,6 +316,7 @@ void createStreetScene(scene, renderer, {
 
 window.addEventListener('beforeunload', () => {
   audio.dispose();
+  gyro.dispose();
   controls.dispose();
   timer.dispose();
   if (streetLife) {

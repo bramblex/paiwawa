@@ -35,6 +35,8 @@ export class FirstPersonControls {
   private readonly movementRight = new THREE.Vector3();
   private yaw: number;
   private pitch: number;
+  private gyroYaw = 0;
+  private gyroPitch = 0;
   private pointerLocked = false;
 
   private readonly onKeyDown = (event: KeyboardEvent): void => {
@@ -101,6 +103,15 @@ export class FirstPersonControls {
     this.camera.rotation.order = 'YXZ';
     this.yaw = this.camera.rotation.y;
     this.pitch = THREE.MathUtils.clamp(this.camera.rotation.x, this.minPitch, this.maxPitch);
+    this.gyroYaw = 0;
+    this.gyroPitch = 0;
+    this.applyRotation();
+  }
+
+  /** Apply a calibrated device-orientation offset without replacing touch look. */
+  setGyroOffset(yaw: number, pitch: number): void {
+    this.gyroYaw = Number.isFinite(yaw) ? yaw : 0;
+    this.gyroPitch = Number.isFinite(pitch) ? pitch : 0;
     this.applyRotation();
   }
 
@@ -171,6 +182,7 @@ export class FirstPersonControls {
   }
 
   private applyRotation(): void {
-    this.camera.rotation.set(this.pitch, this.yaw, 0, 'YXZ');
+    const renderedPitch = THREE.MathUtils.clamp(this.pitch + this.gyroPitch, this.minPitch, this.maxPitch);
+    this.camera.rotation.set(renderedPitch, this.yaw + this.gyroYaw, 0, 'YXZ');
   }
 }

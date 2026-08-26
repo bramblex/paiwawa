@@ -1,4 +1,5 @@
 import type { CompositionResult } from './game/alignment';
+import type { GyroAimState } from './game/gyro-aim';
 
 const successResultImageUrl = '/assets/results/public-toilet-sign-removed-success.png';
 const successResultTitle = '路牌已成功拆除';
@@ -19,6 +20,15 @@ const audioIcon = `
   </svg>
 `;
 
+const gyroIcon = `
+  <svg viewBox="0 0 28 28" aria-hidden="true">
+    <rect class="gyro-phone" x="9" y="5" width="10" height="18" rx="1.4" />
+    <circle class="gyro-center" cx="14" cy="14" r="1.5" />
+    <path class="gyro-orbit" d="M4.4 10.2A10.2 10.2 0 0 1 21 6.7M23.6 17.8A10.2 10.2 0 0 1 7 21.3" />
+    <path class="gyro-arrow" d="m19.5 4.7 2 2.2-2.8.7M8.5 23.3l-2-2.2 2.8-.7" />
+  </svg>
+`;
+
 const arrowIcon = (direction: 'up' | 'down' | 'left' | 'right'): string => `
   <svg viewBox="0 0 24 24" aria-hidden="true" class="move-icon move-icon--${direction}">
     <path d="M12 4 5.5 10.5 7.6 12.6 10.5 9.7V20h3V9.7l2.9 2.9 2.1-2.1Z" />
@@ -35,6 +45,7 @@ export interface GameUI {
   startButton: HTMLButtonElement;
   shutterButton: HTMLButtonElement;
   audioButton: HTMLButtonElement;
+  gyroButton: HTMLButtonElement;
   judgementRetakeButton: HTMLButtonElement;
   judgementContinueButton: HTMLButtonElement;
   resultContinueButton: HTMLButtonElement;
@@ -48,6 +59,7 @@ export interface GameUI {
   enterGame: () => void;
   setPointerLocked: (locked: boolean) => void;
   setMuted: (muted: boolean) => void;
+  setGyroState: (state: GyroAimState) => void;
   showJudgement: (imageDataUrl: string, result: CompositionResult) => void;
   hideJudgement: () => void;
   showSettlement: (result: CompositionResult) => void;
@@ -67,7 +79,7 @@ export function createGameUI(root: HTMLElement): GameUI {
 
       <section class="intro" aria-labelledby="intro-title">
         <div class="intro-copy">
-          <h1 id="intro-title">拍哇<br />哇</h1>
+          <h1 id="intro-title">拍哇哇</h1>
           <p class="intro-lead">找到那个刚刚好的位置，让厕所路牌的箭头指向楼顶的 <strong>WAWA</strong>。</p>
           <div class="brief-line" aria-label="任务目标">
             <span>两块牌都要入镜<br />WAWA 要落在箭头下方</span>
@@ -88,6 +100,10 @@ export function createGameUI(root: HTMLElement): GameUI {
         <button class="audio-toggle" type="button" aria-label="关闭声音" aria-pressed="false">
           ${audioIcon}
           <span class="audio-toggle-label">声音</span>
+        </button>
+        <button class="gyro-toggle is-idle" type="button" aria-label="开启陀螺仪瞄准" aria-pressed="false">
+          ${gyroIcon}
+          <span class="gyro-toggle-label">陀螺仪</span>
         </button>
         <div class="lock-hint" aria-live="polite">
           <span class="lock-dot"></span>
@@ -142,7 +158,7 @@ export function createGameUI(root: HTMLElement): GameUI {
       </section>
 
       <section class="result-overlay" aria-live="polite" aria-label="拍照结果" aria-hidden="true">
-        <article class="contact-sheet">
+        <article class="settlement-stage">
           <div class="photo-frame"><img class="result-image" src="${successResultImageUrl}" alt="工作人员正在拆除公共厕所路牌" /></div>
           <div class="result-copy">
             <h2 class="result-title">${successResultTitle}</h2>
@@ -166,6 +182,7 @@ export function createGameUI(root: HTMLElement): GameUI {
   const startButton = requiredElement<HTMLButtonElement>(root, '.start-button');
   const shutterButton = requiredElement<HTMLButtonElement>(root, '.shutter');
   const audioButton = requiredElement<HTMLButtonElement>(root, '.audio-toggle');
+  const gyroButton = requiredElement<HTMLButtonElement>(root, '.gyro-toggle');
   const judgementOverlay = requiredElement<HTMLElement>(root, '.judgement-overlay');
   const judgementImage = requiredElement<HTMLImageElement>(root, '.judgement-image');
   const judgementTitle = requiredElement<HTMLElement>(root, '.judgement-title');
@@ -181,6 +198,7 @@ export function createGameUI(root: HTMLElement): GameUI {
   const resultContinueButton = requiredElement<HTMLButtonElement>(root, '.result-continue');
   const resetButton = requiredElement<HTMLButtonElement>(root, '.reset-button');
   const lockHint = requiredElement<HTMLElement>(root, '.lock-hint');
+  const touchLookLabel = requiredElement<HTMLElement>(root, '.touch-look-label');
   const flash = requiredElement<HTMLElement>(root, '.flash');
   const mobileMoveButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-move-x]'));
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -226,6 +244,7 @@ export function createGameUI(root: HTMLElement): GameUI {
     startButton,
     shutterButton,
     audioButton,
+    gyroButton,
     judgementRetakeButton,
     judgementContinueButton,
     resultContinueButton,
@@ -264,6 +283,24 @@ export function createGameUI(root: HTMLElement): GameUI {
       audioButton.setAttribute('aria-pressed', String(muted));
       audioButton.setAttribute('aria-label', muted ? '打开声音' : '关闭声音');
       requiredElement<HTMLElement>(audioButton, '.audio-toggle-label').textContent = muted ? '静音' : '声音';
+    },
+    setGyroState: (state) => {
+      const labels: Record<GyroAimState, { button: string; hint: string }> = {
+        idle: { button: '开启陀螺仪瞄准', hint: '点右上开启陀螺仪' },
+        requesting: { button: '正在请求陀螺仪权限', hint: '正在请求陀螺仪权限' },
+        calibrating: { button: '正在校准陀螺仪', hint: '保持手机当前方向' },
+        active: { button: '重新校准陀螺仪瞄准', hint: '陀螺仪瞄准 · 拖动微调' },
+        denied: { button: '陀螺仪未授权，点击重试', hint: '未授权 · 拖动画面转向' },
+        unavailable: { button: '此设备不支持陀螺仪瞄准', hint: '拖动画面转向' },
+      };
+      for (const gyroState of Object.keys(labels) as GyroAimState[]) {
+        gyroButton.classList.toggle(`is-${gyroState}`, gyroState === state);
+      }
+      gyroButton.disabled = state === 'requesting' || state === 'calibrating' || state === 'unavailable';
+      gyroButton.setAttribute('aria-pressed', String(state === 'active'));
+      gyroButton.setAttribute('aria-label', labels[state].button);
+      requiredElement<HTMLElement>(gyroButton, '.gyro-toggle-label').textContent = state === 'active' ? '校准' : '陀螺仪';
+      touchLookLabel.textContent = labels[state].hint;
     },
     showJudgement: (imageDataUrl, result) => {
       stopResultTitleTyping();

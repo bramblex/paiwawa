@@ -37,7 +37,6 @@ export type CompositionFailure =
   | "invalid-viewport"
   | "toilet-out-of-frame"
   | "wawei-out-of-frame"
-  | "sign-too-small"
   | "arrow-not-visible"
   | "wawei-not-below"
   | "horizontal-misalignment"
@@ -68,15 +67,10 @@ interface NormalizedRect {
 }
 
 interface Thresholds {
-  minimumToiletWidth: number;
-  minimumToiletHeight: number;
-  minimumWaweiWidth: number;
-  minimumWaweiHeight: number;
   minimumVisibleFraction: number;
   horizontalTolerance: number;
   minimumGap: number;
   maximumGap: number;
-  minimumBelowSignGap: number;
 }
 
 interface GeometryChecks {
@@ -91,6 +85,8 @@ interface GeometryChecks {
 
 const clamp = (value: number, minimum: number, maximum: number): number =>
   Math.min(maximum, Math.max(minimum, value));
+
+const COMPARISON_EPSILON = 0.5;
 
 const isFiniteNumber = (value: number): boolean => Number.isFinite(value);
 
@@ -145,34 +141,24 @@ const getThresholds = (
   const shortestEdge = Math.min(viewport.width, viewport.height);
 
   return {
-    // A sign must occupy a meaningful portion of the frame, with a modest
-    // absolute floor for very small browser surfaces.
-    minimumToiletWidth: Math.max(180, viewport.width * 0.16),
-    minimumToiletHeight: Math.max(54, viewport.height * 0.09),
-    minimumWaweiWidth: Math.max(48, shortestEdge * 0.075),
-    minimumWaweiHeight: Math.max(48, shortestEdge * 0.075),
-    // A little crop is acceptable, but a mostly clipped landmark is not a
-    // photograph of the intended composition.
-    minimumVisibleFraction: 0.86,
-    // The alignment tolerance follows the target's on-screen width but cannot
-    // become either a one-pixel precision test or a full-sign wide target.
+    // Half-visible is enough for the visual joke; size/readability is not part
+    // of success, so distant signs remain valid targets.
+    minimumVisibleFraction: 0.5,
+    // Treat the whole upper area around WAWA as a valid target instead of
+    // requiring its center to sit on one narrow pixel column.
     horizontalTolerance: clamp(
-      wawei.width * 0.34,
-      Math.max(12, shortestEdge * 0.018),
-      Math.max(28, viewport.width * 0.065),
+      wawei.width * 0.78,
+      Math.max(24, shortestEdge * 0.045),
+      Math.max(72, viewport.width * 0.1),
     ),
-    // The gap should read as a deliberate sliver rather than an overlap or a
-    // large vertical separation. It scales with both the sign and viewport.
-    minimumGap: Math.max(5, wawei.height * 0.045, shortestEdge * 0.008),
+    // The arrow may overlap the top of WAWA slightly and may also sit some
+    // distance above it. Only clearly unrelated vertical placements fail.
+    minimumGap: -Math.min(12, wawei.height * 0.15),
     maximumGap: Math.max(
-      34,
-      wawei.height * 0.42,
-      viewport.height * 0.08,
+      72,
+      wawei.height * 1.4,
+      shortestEdge * 0.18,
     ),
-    // "Below the toilet sign" is a separate semantic rule from the arrow gap.
-    // Requiring a small gap under the toilet rectangle keeps the visual read
-    // unambiguous, while the responsive floor avoids an impossible phone rule.
-    minimumBelowSignGap: Math.max(2, Math.min(6, viewport.height * 0.004)),
   };
 };
 
@@ -237,11 +223,17 @@ export function evaluateComposition(input: CompositionInput): CompositionResult 
   }
 
   const toilet = normalizeRect(toiletSign);
-  const wawei = normalizeRect(waweiSign);
-  if (!toilet || !wawei) {
+  if (!toilet) {
     return makeBaseResult(
-      "sign-too-small",
-      "两块牌子的轮廓还不清楚，再靠近一点。",
+      "toilet-out-of-frame",
+      "先把厕所路牌放进画面里。",
+    );
+  }
+  const wawei = normalizeRect(waweiSign);
+  if (!wawei) {
+    return makeBaseResult(
+      "wawei-out-of-frame",
+      "先把楼顶的 WAWA 牌放进画面里。",
     );
   }
 
@@ -275,27 +267,6 @@ export function evaluateComposition(input: CompositionInput): CompositionResult 
   }
 
   if (
-    toilet.width < thresholds.minimumToiletWidth ||
-    toilet.height < thresholds.minimumToiletHeight ||
-    wawei.width < thresholds.minimumWaweiWidth ||
-    wawei.height < thresholds.minimumWaweiHeight
-  ) {
-    const smallestRatio = Math.min(
-      toilet.width / thresholds.minimumToiletWidth,
-      toilet.height / thresholds.minimumToiletHeight,
-      wawei.width / thresholds.minimumWaweiWidth,
-      wawei.height / thresholds.minimumWaweiHeight,
-    );
-    return makeBaseResult(
-      "sign-too-small",
-      "两块牌子太小，看不清字样；请换一个更近的角度。",
-      dx,
-      gap,
-      0.28 * clamp(smallestRatio, 0, 1),
-    );
-  }
-
-  if (
     !arrowTip.visible ||
     !isFiniteNumber(arrowTip.x) ||
     !isFiniteNumber(arrowTip.y)
@@ -309,10 +280,10 @@ export function evaluateComposition(input: CompositionInput): CompositionResult 
     );
   }
 
-  // The target starts below the toilet rectangle, not merely below its own
-  // arrow tip. That makes the intended visual hierarchy obvious in a photo.
-  const belowSign =
-    wawei.top >= toilet.bottom + thresholds.minimumBelowSignGap;
+  // WAWA still needs to read below the toilet sign, while a few pixels of
+  // perspective overlap remain acceptable.
+  const allowedOverlap = Math.min(12, wawei.height * 0.15);
+  const belowSign = wawei.top + COMPARISON_EPSILON >= toilet.bottom - allowedOverlap;
   if (!belowSign) {
     const belowScore = clamp(
       (wawei.top - toilet.top) / Math.max(toilet.height, 1),
@@ -333,10 +304,10 @@ export function evaluateComposition(input: CompositionInput): CompositionResult 
     0,
     1,
   );
-  if (Math.abs(dx) > thresholds.horizontalTolerance) {
+  if (Math.abs(dx) > thresholds.horizontalTolerance + COMPARISON_EPSILON) {
     return makeBaseResult(
       "horizontal-misalignment",
-      "把 WAWA 的水平中心移到向下箭头的正下方。",
+      "把 WAWA 大致移到向下箭头的下方。",
       dx,
       gap,
       0.56 + 0.19 * horizontalScore,
@@ -352,7 +323,10 @@ export function evaluateComposition(input: CompositionInput): CompositionResult 
     0,
     1,
   );
-  if (gap < thresholds.minimumGap || gap > thresholds.maximumGap) {
+  if (
+    gap < thresholds.minimumGap - COMPARISON_EPSILON ||
+    gap > thresholds.maximumGap + COMPARISON_EPSILON
+  ) {
     const hint =
       gap < thresholds.minimumGap
         ? "让 WAWA 和箭头尖端之间留一条细小的缝。"

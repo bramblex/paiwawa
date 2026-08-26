@@ -63,4 +63,27 @@ describe('FirstPersonControls camera-relative movement', () => {
     expect(camera.position.z).toBeCloseTo(-0.5);
     controls.dispose();
   });
+
+  it('layers gyro aiming over touch look and keeps movement camera-relative', () => {
+    const { camera, controls } = makeControls();
+    controls.lookAt(new THREE.Vector3(0, 1.65, -1));
+    controls.setGyroOffset(Math.PI / 2, 0);
+    controls.setTouchMove(0, 1);
+    controls.update(1);
+    expect(camera.position.x).toBeCloseTo(-1);
+    expect(camera.position.z).toBeCloseTo(0);
+
+    controls.rotateBy(40, 0);
+    expect(camera.rotation.y).not.toBeCloseTo(Math.PI / 2);
+    controls.dispose();
+  });
+
+  it('clears gyro offsets when lookAt resets the authored camera anchor', () => {
+    const { camera, controls } = makeControls();
+    controls.setGyroOffset(Math.PI / 2, Math.PI / 3);
+    controls.lookAt(new THREE.Vector3(0, 1.65, -1));
+    expect(camera.rotation.x).toBeCloseTo(0);
+    expect(camera.rotation.y).toBeCloseTo(0);
+    controls.dispose();
+  });
 });

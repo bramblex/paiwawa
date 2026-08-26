@@ -48,18 +48,27 @@ describe("evaluateComposition", () => {
 
   it("rejects a target that is too far to either side", () => {
     const left = evaluateComposition(
-      validInput({ waweiSign: rect(610, 375, 730, 495) }),
+      validInput({ waweiSign: rect(540, 375, 660, 495) }),
     );
     const right = evaluateComposition(
-      validInput({ waweiSign: rect(870, 375, 990, 495) }),
+      validInput({ waweiSign: rect(940, 375, 1060, 495) }),
     );
 
     expect(left.success).toBe(false);
     expect(left.reason).toBe("horizontal-misalignment");
-    expect(left.dx).toBe(-130);
+    expect(left.dx).toBe(-200);
     expect(right.success).toBe(false);
     expect(right.reason).toBe("horizontal-misalignment");
-    expect(right.dx).toBe(130);
+    expect(right.dx).toBe(200);
+  });
+
+  it("accepts a moderate horizontal offset", () => {
+    const result = evaluateComposition(
+      validInput({ waweiSign: rect(670, 375, 790, 495) }),
+    );
+
+    expect(result.success).toBe(true);
+    expect(result.dx).toBe(-70);
   });
 
   it("rejects WAWA when it is above or overlapping the toilet sign", () => {
@@ -72,18 +81,20 @@ describe("evaluateComposition", () => {
     expect(result.hint).toContain("下方");
   });
 
-  it("rejects a target whose arrow gap is too large or too tight", () => {
+  it("accepts a rough vertical range and rejects clearly unrelated gaps", () => {
     const tooHigh = evaluateComposition(
-      validInput({ waweiSign: rect(740, 322, 860, 442) }),
+      validInput({ waweiSign: rect(740, 245, 860, 365) }),
     );
-    // Keep it below the toilet sign, but far enough from the arrow to fail the
-    // small-gap rule.
-    const tooLow = evaluateComposition(
+    const looseButValid = evaluateComposition(
       validInput({ waweiSign: rect(740, 500, 860, 620) }),
+    );
+    const tooLow = evaluateComposition(
+      validInput({ waweiSign: rect(740, 540, 860, 660) }),
     );
 
     expect(tooHigh.success).toBe(false);
     expect(tooHigh.reason).toBe("wawei-not-below");
+    expect(looseButValid.success).toBe(true);
     expect(tooLow.success).toBe(false);
     expect(tooLow.reason).toBe("vertical-gap");
   });
@@ -102,18 +113,30 @@ describe("evaluateComposition", () => {
     expect(waweiHidden.reason).toBe("wawei-out-of-frame");
   });
 
-  it("rejects signs that are too small to read", () => {
+  it("does not reject signs because their text is small", () => {
     const result = evaluateComposition(
       validInput({
-        toiletSign: rect(280, 180, 440, 230),
-        arrowTip: point(600, 260),
-        waweiSign: rect(570, 275, 618, 323),
+        toiletSign: rect(280, 180, 340, 200),
+        arrowTip: point(360, 205),
+        waweiSign: rect(350, 210, 370, 230),
       }),
     );
 
-    expect(result.success).toBe(false);
-    expect(result.reason).toBe("sign-too-small");
-    expect(result.hint).toContain("太小");
+    expect(result.success).toBe(true);
+    expect(result.reason).toBe("aligned");
+  });
+
+  it("allows a partial crop but still rejects a mostly missing sign", () => {
+    const partial = evaluateComposition(
+      validInput({ toiletSign: rect(-200, 90, 690, 330) }),
+    );
+    const mostlyMissing = evaluateComposition(
+      validInput({ toiletSign: rect(-650, 90, 110, 330) }),
+    );
+
+    expect(partial.success).toBe(true);
+    expect(mostlyMissing.success).toBe(false);
+    expect(mostlyMissing.reason).toBe("toilet-out-of-frame");
   });
 
   it("responds to viewport size instead of using one fixed pixel tolerance", () => {
