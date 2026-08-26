@@ -62,8 +62,9 @@ export interface GameUI {
   setGyroState: (state: GyroAimState) => void;
   showJudgement: (imageDataUrl: string, result: CompositionResult) => void;
   hideJudgement: () => void;
-  showSettlement: (result: CompositionResult) => void;
+  showSettlement: (result: CompositionResult, meta: { levelNumber: number; total: number; name: string; isFinal: boolean }) => void;
   hideSettlement: () => void;
+  setLevel: (levelNumber: number, total: number, name: string, clue: string) => void;
 }
 
 export function createGameUI(root: HTMLElement): GameUI {
@@ -79,6 +80,7 @@ export function createGameUI(root: HTMLElement): GameUI {
 
       <section class="intro" aria-labelledby="intro-title">
         <div class="intro-copy">
+          <span class="intro-level">5 关透视解谜 · 找到每一关的拍摄角度</span>
           <h1 id="intro-title">拍哇哇</h1>
           <p class="intro-lead">找到那个刚刚好的位置，让厕所路牌的箭头指向楼顶的 <strong>WAWA</strong>。</p>
           <div class="brief-line" aria-label="任务目标">
@@ -95,6 +97,7 @@ export function createGameUI(root: HTMLElement): GameUI {
 
       <section class="hud" aria-label="拍照界面">
         <div class="objective">
+          <span class="objective-level">第 1 / 5 关 · 街角初见</span>
           <span class="objective-text">让箭头指向 WAWA</span>
         </div>
         <button class="audio-toggle" type="button" aria-label="关闭声音" aria-pressed="false">
@@ -322,23 +325,29 @@ export function createGameUI(root: HTMLElement): GameUI {
       judgementOverlay.classList.remove('is-visible', 'is-success');
       judgementOverlay.setAttribute('aria-hidden', 'true');
     },
-    showSettlement: (result) => {
+    showSettlement: (result, meta) => {
       judgementOverlay.classList.remove('is-visible', 'is-success');
       judgementOverlay.setAttribute('aria-hidden', 'true');
       resultImage.src = successResultImageUrl;
       resultImage.alt = '工作人员正在拆除公共厕所路牌';
       setResultTitle(successResultTitle, true);
-      resultHint.textContent = result.hint;
+      resultHint.textContent = `第 ${meta.levelNumber} / ${meta.total} 关 · ${meta.name} 已完成　${result.hint}`;
       resultMeter.style.transform = `scaleX(${Math.max(0.08, result.score)})`;
       resultOverlay.classList.add('is-success');
       resultOverlay.classList.add('is-visible');
       resultOverlay.setAttribute('aria-hidden', 'false');
+      resultContinueButton.textContent = meta.isFinal ? '再玩一遍' : '进入下一关';
       window.requestAnimationFrame(() => resultContinueButton.focus());
     },
     hideSettlement: () => {
       stopResultTitleTyping();
       resultOverlay.classList.remove('is-visible', 'is-success');
       resultOverlay.setAttribute('aria-hidden', 'true');
+    },
+    setLevel: (levelNumber, total, name, clue) => {
+      const levelLabel = `第 ${levelNumber} / ${total} 关 · ${name}`;
+      requiredElement<HTMLElement>(root, '.objective-level').textContent = levelLabel;
+      requiredElement<HTMLElement>(root, '.objective-text').textContent = clue;
     },
   };
 }

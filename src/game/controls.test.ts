@@ -64,6 +64,21 @@ describe('FirstPersonControls camera-relative movement', () => {
     controls.dispose();
   });
 
+  it('updates bounds and clears held touch movement between levels', () => {
+    const { camera, controls } = makeControls();
+    camera.position.set(8, 1.65, 8);
+    controls.setBounds({ minX: -2, maxX: 2, minZ: -3, maxZ: 3 });
+    expect(camera.position.x).toBe(2);
+    expect(camera.position.z).toBe(3);
+
+    controls.setTouchMove(0, 1);
+    controls.clearMovement();
+    controls.update(1);
+    expect(camera.position.x).toBe(2);
+    expect(camera.position.z).toBe(3);
+    controls.dispose();
+  });
+
   it('layers gyro aiming over touch look and keeps movement camera-relative', () => {
     const { camera, controls } = makeControls();
     controls.lookAt(new THREE.Vector3(0, 1.65, -1));

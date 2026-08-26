@@ -26,7 +26,7 @@ export class FirstPersonControls {
   private readonly minPitch: number;
   private readonly maxPitch: number;
   private readonly maxDelta: number;
-  private readonly bounds?: FirstPersonControlsOptions['bounds'];
+  private bounds?: FirstPersonControlsOptions['bounds'];
   private readonly cameraHeight?: number;
   private readonly lockElement?: HTMLElement;
   private readonly keys = new Set<string>();
@@ -69,7 +69,7 @@ export class FirstPersonControls {
     this.minPitch = options.minPitch ?? -Math.PI * 0.46;
     this.maxPitch = options.maxPitch ?? Math.PI * 0.38;
     this.maxDelta = options.maxDelta ?? 0.1;
-    this.bounds = options.bounds;
+    this.bounds = options.bounds ? { ...options.bounds } : undefined;
     this.cameraHeight = options.cameraHeight;
     this.lockElement = options.element ?? (typeof document !== 'undefined' ? document.body : undefined);
     this.camera.rotation.order = 'YXZ';
@@ -121,6 +121,18 @@ export class FirstPersonControls {
     this.touchMove.z = THREE.MathUtils.clamp(Number.isFinite(z) ? z : 0, -1, 1);
   }
 
+  /** Replace the walkable rectangle when a new puzzle scene becomes active. */
+  setBounds(bounds?: FirstPersonControlsOptions['bounds']): void {
+    this.bounds = bounds ? { ...bounds } : undefined;
+    this.clampToBounds();
+  }
+
+  /** Stop held keyboard/touch movement before teleporting between levels. */
+  clearMovement(): void {
+    this.keys.clear();
+    this.setTouchMove(0, 0);
+  }
+
   /** Inject a mouse-like look delta (usually touch drag pixels). */
   rotateBy(dx: number, dy: number): void {
     if (!Number.isFinite(dx) || !Number.isFinite(dy)) return;
@@ -161,10 +173,7 @@ export class FirstPersonControls {
       this.camera.position.addScaledVector(this.movementForward, forward * step);
       this.camera.position.addScaledVector(this.movementRight, strafe * step);
     }
-    if (this.bounds) {
-      this.camera.position.x = THREE.MathUtils.clamp(this.camera.position.x, this.bounds.minX, this.bounds.maxX);
-      this.camera.position.z = THREE.MathUtils.clamp(this.camera.position.z, this.bounds.minZ, this.bounds.maxZ);
-    }
+    this.clampToBounds();
   }
 
   dispose(): void {
@@ -184,5 +193,11 @@ export class FirstPersonControls {
   private applyRotation(): void {
     const renderedPitch = THREE.MathUtils.clamp(this.pitch + this.gyroPitch, this.minPitch, this.maxPitch);
     this.camera.rotation.set(renderedPitch, this.yaw + this.gyroYaw, 0, 'YXZ');
+  }
+
+  private clampToBounds(): void {
+    if (!this.bounds) return;
+    this.camera.position.x = THREE.MathUtils.clamp(this.camera.position.x, this.bounds.minX, this.bounds.maxX);
+    this.camera.position.z = THREE.MathUtils.clamp(this.camera.position.z, this.bounds.minZ, this.bounds.maxZ);
   }
 }

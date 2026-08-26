@@ -180,6 +180,16 @@ button:focus-visible {
   white-space: nowrap;
 }
 
+.intro-level {
+  margin-bottom: 16px;
+  color: var(--warm);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+}
+
 .intro-lead {
   max-width: 29em;
   margin: 36px 0 0;
@@ -294,6 +304,19 @@ button:focus-visible {
   text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
 }
 
+.objective-level {
+  max-width: min(48vw, 320px);
+  overflow: hidden;
+  color: var(--warm);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .objective::before {
   position: absolute;
   top: 0;
@@ -305,9 +328,11 @@ button:focus-visible {
 }
 
 .objective-text {
+  max-width: min(62vw, 520px);
   font-family: 'ZCOOL QingKe HuangYou', sans-serif;
   font-size: clamp(16px, 1.55vw, 22px);
   font-weight: 400;
+  line-height: 1.25;
   letter-spacing: -0.02em;
 }
 
@@ -973,6 +998,15 @@ kbd {
   .objective {
     top: max(18px, env(safe-area-inset-top));
     left: max(18px, env(safe-area-inset-left));
+  }
+
+  .objective-level {
+    max-width: calc(100vw - 150px);
+  }
+
+  .objective-text {
+    max-width: calc(100vw - 168px);
+    font-size: 14px;
   }
 
   .audio-toggle {

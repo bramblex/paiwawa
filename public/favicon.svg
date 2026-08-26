@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="拍哇哇取景框图标">
+  <rect width="64" height="64" fill="#101820" />
+  <path d="M12 24V12h12M40 12h12v12M52 40v12H40M24 52H12V40" fill="none" stroke="#f4efe3" stroke-linecap="square" stroke-width="5" />
+  <circle cx="32" cy="32" r="10" fill="none" stroke="#ff684d" stroke-width="5" />
+  <circle cx="32" cy="32" r="3" fill="#efb277" />
+</svg>
