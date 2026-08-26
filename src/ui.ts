@@ -1,8 +1,11 @@
 import type { CompositionResult } from './game/alignment';
 import type { GyroAimState } from './game/gyro-aim';
+import { SECURITY_ALERT_CRITICAL_RATIO } from './game/security-alert';
 
 const successResultImageUrl = '/assets/results/public-toilet-sign-removed-success.png';
+const securityFailureImageUrl = '/assets/results/security-251-failure.png';
 const successResultTitle = '路牌已成功拆除';
+const securityFailureTitle = '喜提251';
 const resultTitleTypingInterval = 95;
 
 const cameraIcon = `
@@ -43,6 +46,7 @@ function requiredElement<T extends Element>(root: ParentNode, selector: string):
 
 export interface GameUI {
   startButton: HTMLButtonElement;
+  loadingRetryButton: HTMLButtonElement;
   shutterButton: HTMLButtonElement;
   audioButton: HTMLButtonElement;
   gyroButton: HTMLButtonElement;
@@ -55,14 +59,19 @@ export interface GameUI {
   mobileMoveButtons: HTMLButtonElement[];
   setLoading: (ratio: number, label?: string) => void;
   setReady: () => void;
+  showLevelLoading: (levelNumber: number, total: number, name: string) => void;
+  setLevelLoadProgress: (ratio: number, label?: string) => void;
+  hideLevelLoading: () => void;
   setError: (message: string) => void;
   enterGame: () => void;
   setPointerLocked: (locked: boolean) => void;
   setMuted: (muted: boolean) => void;
   setGyroState: (state: GyroAimState) => void;
+  setSecurityAlert: (ratio: number, targeted: boolean, enabled: boolean) => void;
   showJudgement: (imageDataUrl: string, result: CompositionResult) => void;
   hideJudgement: () => void;
   showSettlement: (result: CompositionResult, meta: { levelNumber: number; total: number; name: string; isFinal: boolean }) => void;
+  showSecurityFailure: (meta: { levelNumber: number; total: number; name: string }) => void;
   hideSettlement: () => void;
   setLevel: (levelNumber: number, total: number, name: string, clue: string) => void;
 }
@@ -70,9 +79,10 @@ export interface GameUI {
 export function createGameUI(root: HTMLElement): GameUI {
   root.innerHTML = `
     <main class="game-shell">
-      <section class="loading-screen" aria-live="polite">
+      <section class="loading-screen" aria-live="polite" aria-hidden="false">
         <div class="loading-brand">
           <span class="loading-title">拍哇哇</span>
+          <button class="loading-retry" type="button" hidden>重试载入</button>
         </div>
         <div class="loading-track" aria-hidden="true"><span class="loading-fill"></span></div>
         <p class="loading-label">正在搭建街景 · 0%</p>
@@ -80,7 +90,7 @@ export function createGameUI(root: HTMLElement): GameUI {
 
       <section class="intro" aria-labelledby="intro-title">
         <div class="intro-copy">
-          <span class="intro-level">5 关透视解谜 · 找到每一关的拍摄角度</span>
+          <span class="intro-level">10 关透视解谜 · 找到每一关的拍摄角度</span>
           <h1 id="intro-title">拍哇哇</h1>
           <p class="intro-lead">找到那个刚刚好的位置，让厕所路牌的箭头指向楼顶的 <strong>WAWA</strong>。</p>
           <div class="brief-line" aria-label="任务目标">
@@ -97,8 +107,15 @@ export function createGameUI(root: HTMLElement): GameUI {
 
       <section class="hud" aria-label="拍照界面">
         <div class="objective">
-          <span class="objective-level">第 1 / 5 关 · 街角初见</span>
+          <span class="objective-level">第 1 / 10 关 · 暮色直街</span>
           <span class="objective-text">让箭头指向 WAWA</span>
+        </div>
+        <div class="security-alert" role="meter" aria-label="保安警戒" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-hidden="true">
+          <div class="security-alert-copy">
+            <span>保安警戒</span>
+            <strong>不要长时间对准灯牌</strong>
+          </div>
+          <div class="security-alert-track" aria-hidden="true"><span></span></div>
         </div>
         <button class="audio-toggle" type="button" aria-label="关闭声音" aria-pressed="false">
           ${audioIcon}
@@ -178,6 +195,8 @@ export function createGameUI(root: HTMLElement): GameUI {
   `;
 
   const loading = requiredElement<HTMLElement>(root, '.loading-screen');
+  const loadingTitle = requiredElement<HTMLElement>(root, '.loading-title');
+  const loadingRetryButton = requiredElement<HTMLButtonElement>(root, '.loading-retry');
   const loadingFill = requiredElement<HTMLElement>(root, '.loading-fill');
   const loadingLabel = requiredElement<HTMLElement>(root, '.loading-label');
   const intro = requiredElement<HTMLElement>(root, '.intro');
@@ -187,6 +206,8 @@ export function createGameUI(root: HTMLElement): GameUI {
   const audioButton = requiredElement<HTMLButtonElement>(root, '.audio-toggle');
   const gyroButton = requiredElement<HTMLButtonElement>(root, '.gyro-toggle');
   const judgementOverlay = requiredElement<HTMLElement>(root, '.judgement-overlay');
+  const securityAlert = requiredElement<HTMLElement>(root, '.security-alert');
+  const securityAlertFill = requiredElement<HTMLElement>(root, '.security-alert-track span');
   const judgementImage = requiredElement<HTMLImageElement>(root, '.judgement-image');
   const judgementTitle = requiredElement<HTMLElement>(root, '.judgement-title');
   const judgementHint = requiredElement<HTMLElement>(root, '.judgement-hint');
@@ -206,6 +227,22 @@ export function createGameUI(root: HTMLElement): GameUI {
   const mobileMoveButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-move-x]'));
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   let resultTitleTypingTimer: number | null = null;
+  let loadingHideTimer: number | null = null;
+
+  const cancelLoadingHide = (): void => {
+    if (loadingHideTimer === null) return;
+    window.clearTimeout(loadingHideTimer);
+    loadingHideTimer = null;
+  };
+
+  const hideLoadingScreen = (delay = 180): void => {
+    cancelLoadingHide();
+    loadingHideTimer = window.setTimeout(() => {
+      loading.classList.add('is-hidden');
+      loading.setAttribute('aria-hidden', 'true');
+      loadingHideTimer = null;
+    }, reducedMotion.matches ? 0 : delay);
+  };
 
   const stopResultTitleTyping = (): void => {
     if (resultTitleTypingTimer !== null) {
@@ -245,6 +282,7 @@ export function createGameUI(root: HTMLElement): GameUI {
 
   return {
     startButton,
+    loadingRetryButton,
     shutterButton,
     audioButton,
     gyroButton,
@@ -264,12 +302,37 @@ export function createGameUI(root: HTMLElement): GameUI {
       loadingFill.style.transform = 'scaleX(1)';
       loadingLabel.textContent = '街景就绪 · 100%';
       startButton.disabled = false;
-      window.setTimeout(() => loading.classList.add('is-hidden'), 320);
+      loadingRetryButton.hidden = true;
+      hideLoadingScreen(320);
+    },
+    showLevelLoading: (levelNumber, total, name) => {
+      cancelLoadingHide();
+      loadingTitle.textContent = `第 ${levelNumber} / ${total} 关 · ${name}`;
+      loadingFill.style.transform = 'scaleX(0)';
+      loadingLabel.textContent = '正在搭建下一处街景 · 0%';
+      loading.classList.remove('is-hidden', 'has-error');
+      loading.classList.add('is-level-transition');
+      loading.setAttribute('aria-hidden', 'false');
+      loadingRetryButton.hidden = true;
+    },
+    setLevelLoadProgress: (ratio, label) => {
+      const percent = Math.round(Math.max(0, Math.min(1, ratio)) * 100);
+      loadingFill.style.transform = `scaleX(${percent / 100})`;
+      loadingLabel.textContent = `${label ? `正在载入 ${label}` : '正在搭建下一处街景'} · ${percent}%`;
+    },
+    hideLevelLoading: () => {
+      loadingFill.style.transform = 'scaleX(1)';
+      loadingLabel.textContent = '街景就绪 · 100%';
+      loading.classList.remove('is-level-transition');
+      hideLoadingScreen();
     },
     setError: (message) => {
+      cancelLoadingHide();
       loading.classList.remove('is-hidden');
       loading.classList.add('has-error');
+      loading.setAttribute('aria-hidden', 'false');
       loadingLabel.textContent = message;
+      loadingRetryButton.hidden = false;
     },
     enterGame: () => {
       intro.classList.add('is-hidden');
@@ -305,9 +368,19 @@ export function createGameUI(root: HTMLElement): GameUI {
       requiredElement<HTMLElement>(gyroButton, '.gyro-toggle-label').textContent = state === 'active' ? '校准' : '陀螺仪';
       touchLookLabel.textContent = labels[state].hint;
     },
+    setSecurityAlert: (ratio, targeted, enabled) => {
+      const normalized = Math.max(0, Math.min(1, Number.isFinite(ratio) ? ratio : 0));
+      const percent = Math.round(normalized * 100);
+      securityAlert.classList.toggle('is-visible', enabled);
+      securityAlert.classList.toggle('is-targeted', enabled && targeted);
+      securityAlert.classList.toggle('is-critical', enabled && normalized >= SECURITY_ALERT_CRITICAL_RATIO);
+      securityAlert.setAttribute('aria-hidden', String(!enabled));
+      securityAlert.setAttribute('aria-valuenow', String(percent));
+      securityAlertFill.style.transform = `scaleX(${normalized})`;
+    },
     showJudgement: (imageDataUrl, result) => {
       stopResultTitleTyping();
-      resultOverlay.classList.remove('is-visible', 'is-success');
+      resultOverlay.classList.remove('is-visible', 'is-success', 'is-security-failure');
       resultOverlay.setAttribute('aria-hidden', 'true');
       judgementImage.src = imageDataUrl;
       judgementTitle.textContent = result.success ? '拍照成功' : '拍照未成功';
@@ -333,15 +406,30 @@ export function createGameUI(root: HTMLElement): GameUI {
       setResultTitle(successResultTitle, true);
       resultHint.textContent = `第 ${meta.levelNumber} / ${meta.total} 关 · ${meta.name} 已完成　${result.hint}`;
       resultMeter.style.transform = `scaleX(${Math.max(0.08, result.score)})`;
+      resultOverlay.classList.remove('is-security-failure');
       resultOverlay.classList.add('is-success');
       resultOverlay.classList.add('is-visible');
       resultOverlay.setAttribute('aria-hidden', 'false');
       resultContinueButton.textContent = meta.isFinal ? '再玩一遍' : '进入下一关';
       window.requestAnimationFrame(() => resultContinueButton.focus());
     },
+    showSecurityFailure: (meta) => {
+      judgementOverlay.classList.remove('is-visible', 'is-success');
+      judgementOverlay.setAttribute('aria-hidden', 'true');
+      resultImage.src = securityFailureImageUrl;
+      resultImage.alt = '蓝色制服、戴帽子的保安正在给玩家戴上手铐';
+      setResultTitle(securityFailureTitle, true);
+      resultHint.textContent = `第 ${meta.levelNumber} / ${meta.total} 关 · ${meta.name}　保安警戒已满。`;
+      resultMeter.style.transform = 'scaleX(1)';
+      resultOverlay.classList.remove('is-success');
+      resultOverlay.classList.add('is-security-failure', 'is-visible');
+      resultOverlay.setAttribute('aria-hidden', 'false');
+      resultContinueButton.textContent = '重试本关';
+      window.requestAnimationFrame(() => resultContinueButton.focus());
+    },
     hideSettlement: () => {
       stopResultTitleTyping();
-      resultOverlay.classList.remove('is-visible', 'is-success');
+      resultOverlay.classList.remove('is-visible', 'is-success', 'is-security-failure');
       resultOverlay.setAttribute('aria-hidden', 'true');
     },
     setLevel: (levelNumber, total, name, clue) => {

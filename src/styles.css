@@ -143,6 +143,32 @@ button:focus-visible {
   color: #ff9d89;
 }
 
+.loading-retry {
+  align-self: flex-start;
+  min-height: 44px;
+  margin-top: 14px;
+  padding: 0 18px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 800;
+  border: 1px solid var(--paper);
+  background: var(--paper);
+  cursor: pointer;
+}
+
+.loading-retry[hidden] {
+  display: none;
+}
+
+.loading-retry:hover {
+  border-color: var(--warm);
+  background: var(--warm);
+}
+
+.loading-screen.is-level-transition {
+  background: rgba(10, 15, 20, 0.97);
+}
+
 .intro {
   position: absolute;
   inset: 0;
@@ -334,6 +360,71 @@ button:focus-visible {
   font-weight: 400;
   line-height: 1.25;
   letter-spacing: -0.02em;
+}
+
+.security-alert {
+  position: absolute;
+  top: max(24px, env(safe-area-inset-top));
+  left: 50%;
+  z-index: 4;
+  display: none;
+  width: min(38vw, 420px);
+  color: var(--paper);
+  transform: translateX(-50%);
+}
+
+.security-alert.is-visible {
+  display: block;
+}
+
+.security-alert-copy {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 8px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.72);
+}
+
+.security-alert-copy span {
+  font-weight: 900;
+}
+
+.security-alert-copy strong {
+  overflow: hidden;
+  color: rgba(244, 239, 227, 0.72);
+  font-size: 10px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.security-alert-track {
+  height: 4px;
+  overflow: hidden;
+  background: rgba(244, 239, 227, 0.2);
+  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.45);
+}
+
+.security-alert-track span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: #f0b54d;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: background-color 140ms ease;
+}
+
+.security-alert.is-targeted .security-alert-track span {
+  background: #ff765e;
+}
+
+.security-alert.is-critical .security-alert-track span {
+  background: #ff3d3d;
+  box-shadow: 0 0 14px rgba(255, 61, 61, 0.72);
 }
 
 .audio-toggle {
@@ -900,6 +991,18 @@ kbd {
   color: #ffd8cc;
 }
 
+.result-overlay.is-security-failure .photo-frame::before {
+  background-image: url('/assets/results/security-251-failure.png');
+}
+
+.result-overlay.is-security-failure .result-title {
+  color: #ff6b5e;
+}
+
+.result-overlay.is-security-failure .result-meter span {
+  background: #ff3d3d;
+}
+
 .result-hint {
   max-width: 65ch;
   min-height: 0;
@@ -1007,6 +1110,15 @@ kbd {
   .objective-text {
     max-width: calc(100vw - 168px);
     font-size: 14px;
+  }
+
+  .security-alert {
+    top: max(72px, calc(env(safe-area-inset-top) + 56px));
+    width: calc(100vw - 40px);
+  }
+
+  .security-alert-copy strong {
+    max-width: 62vw;
   }
 
   .audio-toggle {

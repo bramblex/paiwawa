@@ -8,6 +8,10 @@ import { GyroAimControls } from './game/gyro-aim';
 import { GAME_LEVELS, LEVEL_COUNT, getLevel, getNextLevelIndex } from './game/levels';
 import { projectObjectBounds, projectObjectPoint } from './game/projection';
 import { createStreetScene, type StreetLandmarks, type StreetSceneRuntime } from './game/scene';
+import {
+  SecurityAlertTracker,
+  isSecurityLevel,
+} from './game/security-alert';
 import { createStreetLife, type StreetLife } from './game/street-life';
 import './styles.css';
 import { createGameUI } from './ui';
@@ -21,7 +25,9 @@ declare global {
       setPlayer: (x: number, z: number) => void;
       lookAt: (x: number, y: number, z: number) => void;
       levelIndex: () => number;
-      setLevel: (index: number) => void;
+      levelLoadState: (index: number) => ReturnType<StreetSceneRuntime['getLevelLoadState']>;
+      ensureLevel: (index: number) => Promise<void>;
+      setLevel: (index: number) => Promise<void>;
       audioState: () => GameAudio['state'];
     };
   }
@@ -79,8 +85,16 @@ let streetLife: StreetLife | null = null;
 let activeLevelIndex = 0;
 let ready = false;
 let started = false;
-let photoStage: 'playing' | 'judging' | 'settled' = 'playing';
+let photoStage: 'playing' | 'judging' | 'settled' | 'caught' | 'loading' | 'load-error' = 'playing';
 let pendingCapture: { photo: string; result: CompositionResult } | null = null;
+let failedLevelIndex: number | null = null;
+let levelTransitionToken = 0;
+const securityTracker = new SecurityAlertTracker(coarsePointer);
+
+const resetSecurityAlert = (): void => {
+  securityTracker.reset();
+  ui.setSecurityAlert(0, false, isSecurityLevel(activeLevelIndex));
+};
 
 const resetPlayer = (): void => {
   if (!landmarks) return;
@@ -125,6 +139,7 @@ const activateLevel = (index: number): void => {
   controls.setBounds(level.movementBounds);
   ui.setLevel(level.number, LEVEL_COUNT, level.name, level.clue);
   replaceStreetLife();
+  resetSecurityAlert();
   resetPlayer();
 };
 
@@ -149,22 +164,33 @@ const aimAtSolution = (currentLandmarks: StreetLandmarks): void => {
   controls.lookAt(arrowWorld.clone().lerp(wawaWorld, 0.52));
 };
 
-const publishLevelQa = (runtime: StreetSceneRuntime): void => {
+const publishLevelQa = async (runtime: StreetSceneRuntime): Promise<void> => {
   if (new URLSearchParams(window.location.search).get('qa') !== 'levels') return;
-  const results = GAME_LEVELS.map((level, index) => {
-    const currentLandmarks = runtime.setLevel(index);
-    aimAtSolution(currentLandmarks);
-    const result = evaluateLandmarks(currentLandmarks);
-    return {
-      id: level.id,
-      success: result.success,
-      reason: result.reason,
-      score: Number(result.score.toFixed(3)),
-      dx: Number(result.dx.toFixed(1)),
-      gap: Number(result.gap.toFixed(1)),
-      solution: currentLandmarks.solutionPosition.toArray().map((value) => Number(value.toFixed(2))),
-    };
-  });
+  const results = [];
+  for (const [index, level] of GAME_LEVELS.entries()) {
+    try {
+      await runtime.ensureLevel(index);
+      const currentLandmarks = runtime.setLevel(index);
+      aimAtSolution(currentLandmarks);
+      const result = evaluateLandmarks(currentLandmarks);
+      results.push({
+        id: level.id,
+        success: result.success,
+        reason: result.reason,
+        score: Number(result.score.toFixed(3)),
+        dx: Number(result.dx.toFixed(1)),
+        gap: Number(result.gap.toFixed(1)),
+        solution: currentLandmarks.solutionPosition.toArray().map((value) => Number(value.toFixed(2))),
+      });
+    } catch (error) {
+      results.push({
+        id: level.id,
+        success: false,
+        reason: 'load-error',
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
   document.documentElement.dataset.levelQa = JSON.stringify(results);
 };
 
@@ -212,11 +238,50 @@ const resolveJudgement = (): void => {
   });
 };
 
+const requestLevelTransition = async (requestedIndex: number): Promise<void> => {
+  if (!sceneRuntime) return;
+  const targetIndex = Math.min(LEVEL_COUNT - 1, Math.max(0, Math.trunc(requestedIndex)));
+  const targetLevel = getLevel(targetIndex);
+  const token = ++levelTransitionToken;
+  const needsLoading = sceneRuntime.getLevelLoadState(targetIndex) !== 'ready';
+  failedLevelIndex = null;
+
+  if (needsLoading) {
+    photoStage = 'loading';
+    pendingCapture = null;
+    controls.clearMovement();
+    ui.hideJudgement();
+    ui.hideSettlement();
+    ui.showLevelLoading(targetLevel.number, LEVEL_COUNT, targetLevel.name);
+    if (document.pointerLockElement) void document.exitPointerLock();
+  }
+
+  try {
+    await sceneRuntime.ensureLevel(targetIndex, (progress) => {
+      if (token !== levelTransitionToken || !needsLoading) return;
+      ui.setLevelLoadProgress(progress.ratio, progress.label);
+    });
+    if (token !== levelTransitionToken) return;
+    activateLevel(targetIndex);
+    if (needsLoading) ui.hideLevelLoading();
+    resumeGame();
+  } catch (error) {
+    if (token !== levelTransitionToken) return;
+    console.error(error);
+    failedLevelIndex = targetIndex;
+    photoStage = 'load-error';
+    ui.setError(`第 ${targetLevel.number} 关载入失败，请重试。`);
+  }
+};
+
 const continueAfterSettlement = (): void => {
+  if (photoStage === 'caught') {
+    void requestLevelTransition(activeLevelIndex);
+    return;
+  }
   if (photoStage !== 'settled') return;
   const nextLevelIndex = getNextLevelIndex(activeLevelIndex) ?? 0;
-  activateLevel(nextLevelIndex);
-  resumeGame();
+  void requestLevelTransition(nextLevelIndex);
 };
 
 ui.startButton.addEventListener('click', () => {
@@ -247,8 +312,16 @@ ui.gyroButton.addEventListener('click', (event) => {
 ui.judgementRetakeButton.addEventListener('click', resumeGame);
 ui.judgementContinueButton.addEventListener('click', resolveJudgement);
 ui.resultContinueButton.addEventListener('click', continueAfterSettlement);
+ui.loadingRetryButton.addEventListener('click', () => {
+  if (failedLevelIndex === null) {
+    window.location.reload();
+    return;
+  }
+  void requestLevelTransition(failedLevelIndex);
+});
 ui.resetButton.addEventListener('click', () => {
   resetPlayer();
+  resetSecurityAlert();
   resumeGame();
 });
 
@@ -335,6 +408,43 @@ const onResize = (): void => {
 };
 window.addEventListener('resize', onResize);
 
+const triggerSecurityFailure = (): void => {
+  if (photoStage !== 'playing' || !isSecurityLevel(activeLevelIndex)) return;
+  photoStage = 'caught';
+  pendingCapture = null;
+  controls.clearMovement();
+  audio.playFail();
+  if (document.pointerLockElement) void document.exitPointerLock();
+  const level = getLevel(activeLevelIndex);
+  ui.setSecurityAlert(1, false, true);
+  ui.showSecurityFailure({ levelNumber: level.number, total: LEVEL_COUNT, name: level.name });
+};
+
+const updateSecurityAlert = (deltaSeconds: number): void => {
+  const enabled = isSecurityLevel(activeLevelIndex);
+  if (!enabled) {
+    const snapshot = securityTracker.snapshot;
+    if (snapshot.ratio !== 0 || snapshot.targeted || snapshot.caught) securityTracker.reset();
+    ui.setSecurityAlert(0, false, false);
+    return;
+  }
+  if (document.hidden || !started || photoStage !== 'playing' || !landmarks) {
+    ui.setSecurityAlert(securityTracker.snapshot.ratio, false, false);
+    return;
+  }
+  const viewport = {
+    width: renderer.domElement.clientWidth,
+    height: renderer.domElement.clientHeight,
+  };
+  const snapshot = securityTracker.update(
+    projectObjectBounds(landmarks.waweiFace, camera, viewport),
+    viewport,
+    deltaSeconds,
+  );
+  ui.setSecurityAlert(snapshot.ratio, snapshot.targeted, true);
+  if (snapshot.caught) triggerSecurityFailure();
+};
+
 const animate = (timestamp?: number): void => {
   requestAnimationFrame(animate);
   timer.update(timestamp);
@@ -343,23 +453,38 @@ const animate = (timestamp?: number): void => {
     gyro.update(delta);
     controls.update(delta);
   }
+  updateSecurityAlert(delta);
   streetLife?.update(delta, started && photoStage === 'playing' ? camera.position : undefined);
   sceneRuntime?.update(delta);
   renderer.render(scene, camera);
 };
 animate();
 
+const pageSearchParams = new URLSearchParams(window.location.search);
+const requestedBackgroundDelay = pageSearchParams.get('qa') === 'loading'
+  ? Number(pageSearchParams.get('delayMs'))
+  : 0;
+
 void createStreetScene(scene, renderer, {
   onProgress: (ratio, asset) => ui.setLoading(ratio, asset),
+  backgroundLevelDelayMs: Number.isFinite(requestedBackgroundDelay)
+    ? Math.min(10_000, Math.max(0, requestedBackgroundDelay))
+    : 0,
 })
-  .then((runtime) => {
+  .then(async (runtime) => {
     sceneRuntime = runtime;
     landmarks = runtime.landmarks;
-    publishLevelQa(runtime);
-    const searchParams = new URLSearchParams(window.location.search);
+    const searchParams = pageSearchParams;
+    if (searchParams.get('qa') === 'loading') {
+      document.documentElement.dataset.initialLevelStates = JSON.stringify(
+        GAME_LEVELS.map((_level, index) => runtime.getLevelLoadState(index)),
+      );
+    }
     const requestedQaLevel = searchParams.get('qa') === 'levels' ? Number(searchParams.get('level')) : 0;
+    await publishLevelQa(runtime);
+    await runtime.ensureLevel(Number.isFinite(requestedQaLevel) ? requestedQaLevel : 0);
     activateLevel(Number.isFinite(requestedQaLevel) ? requestedQaLevel : 0);
-    if (searchParams.get('qa') === 'levels' && searchParams.get('solve') === '1' && landmarks) {
+    if (['levels', 'loading'].includes(searchParams.get('qa') ?? '') && searchParams.get('solve') === '1' && landmarks) {
       aimAtSolution(landmarks);
     }
     ready = true;
@@ -374,7 +499,9 @@ void createStreetScene(scene, renderer, {
       },
       lookAt: (x, y, z) => controls.lookAt(new THREE.Vector3(x, y, z)),
       levelIndex: () => activeLevelIndex,
-      setLevel: (index) => activateLevel(index),
+      levelLoadState: (index) => runtime.getLevelLoadState(index),
+      ensureLevel: (index) => runtime.ensureLevel(index),
+      setLevel: (index) => requestLevelTransition(index),
       audioState: () => audio.state,
     };
   })

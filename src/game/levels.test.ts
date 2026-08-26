@@ -2,14 +2,14 @@ import { describe, expect, it } from 'vitest';
 
 import { GAME_LEVELS, LEVEL_COUNT, getLevel, getNextLevelIndex } from './levels';
 
-describe('five-level puzzle campaign', () => {
-  it('contains five uniquely themed and positioned levels', () => {
-    expect(LEVEL_COUNT).toBe(5);
-    expect(new Set(GAME_LEVELS.map((level) => level.id)).size).toBe(5);
-    expect(new Set(GAME_LEVELS.map((level) => level.themeKey)).size).toBe(5);
-    expect(new Set(GAME_LEVELS.map((level) => level.targetBuilding.modelUrl)).size).toBe(5);
-    expect(new Set(GAME_LEVELS.map((level) => level.toiletSign.position.join(','))).size).toBe(5);
-    expect(new Set(GAME_LEVELS.map((level) => level.startPosition.join(','))).size).toBe(5);
+describe('ten-level puzzle campaign', () => {
+  it('contains ten uniquely themed and positioned levels', () => {
+    expect(LEVEL_COUNT).toBe(10);
+    expect(new Set(GAME_LEVELS.map((level) => level.id)).size).toBe(10);
+    expect(new Set(GAME_LEVELS.map((level) => level.themeKey)).size).toBe(10);
+    expect(new Set(GAME_LEVELS.map((level) => level.targetBuilding.modelUrl)).size).toBe(10);
+    expect(new Set(GAME_LEVELS.map((level) => level.toiletSign.position.join(','))).size).toBe(10);
+    expect(new Set(GAME_LEVELS.map((level) => level.startPosition.join(','))).size).toBe(10);
   });
 
   it('keeps every authored start and approximate solution inside its movement bounds', () => {
@@ -41,9 +41,10 @@ describe('five-level puzzle campaign', () => {
 
   it('advances through the campaign and loops only after the finale', () => {
     expect(getLevel(-99)).toBe(GAME_LEVELS[0]);
-    expect(getLevel(99)).toBe(GAME_LEVELS[4]);
+    expect(getLevel(99)).toBe(GAME_LEVELS[9]);
     expect(getNextLevelIndex(0)).toBe(1);
     expect(getNextLevelIndex(3)).toBe(4);
-    expect(getNextLevelIndex(4)).toBeNull();
+    expect(getNextLevelIndex(8)).toBe(9);
+    expect(getNextLevelIndex(9)).toBeNull();
   });
 });
