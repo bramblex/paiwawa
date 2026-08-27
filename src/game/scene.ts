@@ -803,7 +803,7 @@ const addSecurityGuard = (
   const toiletSignPosition = tupleToVector(level.toiletSign.position);
   guard.position.set(toiletSignPosition.x, 0.16, toiletSignPosition.z + 0.65);
   guard.lookAt(0, guard.position.y, toiletSignPosition.z + 0.65);
-  guard.scale.setScalar(1.06);
+  guard.scale.setScalar(0.6);
   parent.add(guard);
   return guard;
 };
