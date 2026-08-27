@@ -446,7 +446,7 @@ export function createGameUI(root: HTMLElement): GameUI {
       resultImage.src = securityFailureImageUrl;
       resultImage.alt = '蓝色制服、戴帽子的保安正在给玩家戴上手铐';
       setResultTitle(securityFailureTitle, true);
-      resultHint.textContent = `镜头长时间正对涉事路牌，你被蓝帽保安误判为布牌人员。系统通报：抓获米猴／境外势力，251 号流程已启动。　第 ${meta.levelNumber} / ${meta.total} 关 · ${meta.name}`;
+      resultHint.textContent = `镜头长时间正对涉事路牌，你被蓝帽保安误判为布牌人员。${WORLD_COPY.securityFailureReport}　第 ${meta.levelNumber} / ${meta.total} 关 · ${meta.name}`;
       resultMeter.style.transform = 'scaleX(1)';
       resultOverlay.classList.remove('is-success');
       resultOverlay.classList.add('is-security-failure', 'is-visible');
