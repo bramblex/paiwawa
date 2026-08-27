@@ -185,6 +185,7 @@ export interface StreetLifeOptions {
 
 export interface StreetLife {
   readonly root: THREE.Group;
+  getVisibleGreetingSubtitles(): readonly THREE.Sprite[];
   update(deltaSeconds: number, listenerPosition?: Readonly<THREE.Vector3>): void;
   dispose(): void;
 }
@@ -853,7 +854,14 @@ export const createStreetLife = (options: StreetLifeOptions = {}): StreetLife =>
     carActors.length = 0;
   };
 
-  return { root, update, dispose };
+  const getVisibleGreetingSubtitles = (): readonly THREE.Sprite[] =>
+    disposed
+      ? []
+      : pedestrianActors
+          .map((actor) => actor.subtitle)
+          .filter((subtitle) => subtitle.visible);
+
+  return { root, getVisibleGreetingSubtitles, update, dispose };
 };
 
 export const STREET_LIFE_THEMES = STREET_LIFE_PALETTES;

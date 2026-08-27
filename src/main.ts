@@ -6,6 +6,7 @@ import { GameAudio } from './game/audio';
 import { FirstPersonControls } from './game/controls';
 import { GyroAimControls } from './game/gyro-aim';
 import { GAME_LEVELS, LEVEL_COUNT, getLevel, getNextLevelIndex } from './game/levels';
+import { scorePhoto, type ScoredPhotoResult } from './game/photo-score';
 import { projectObjectBounds, projectObjectPoint } from './game/projection';
 import { createStreetScene, type StreetLandmarks, type StreetSceneRuntime } from './game/scene';
 import {
@@ -86,7 +87,7 @@ let activeLevelIndex = 0;
 let ready = false;
 let started = false;
 let photoStage: 'playing' | 'judging' | 'settled' | 'caught' | 'loading' | 'load-error' = 'playing';
-let pendingCapture: { photo: string; result: CompositionResult } | null = null;
+let pendingCapture: { photo: string; result: ScoredPhotoResult } | null = null;
 let failedLevelIndex: number | null = null;
 let levelTransitionToken = 0;
 const securityTracker = new SecurityAlertTracker(coarsePointer);
@@ -194,9 +195,19 @@ const publishLevelQa = async (runtime: StreetSceneRuntime): Promise<void> => {
   document.documentElement.dataset.levelQa = JSON.stringify(results);
 };
 
-const takePhoto = (): CompositionResult | null => {
+const takePhoto = (): ScoredPhotoResult | null => {
   if (!ready || !started || photoStage !== 'playing' || !landmarks) return null;
-  const result = evaluateLandmarks(landmarks);
+  const composition = evaluateLandmarks(landmarks);
+  const viewport = {
+    width: renderer.domElement.clientWidth,
+    height: renderer.domElement.clientHeight,
+  };
+  const greetingCaptions = streetLife
+    ? streetLife
+        .getVisibleGreetingSubtitles()
+        .map((subtitle) => projectObjectBounds(subtitle, camera, viewport))
+    : [];
+  const result = scorePhoto(composition, greetingCaptions, viewport);
 
   audio.playShutter();
   if (result.success) audio.playSuccess();

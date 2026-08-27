@@ -810,6 +810,46 @@ kbd {
   color: #b63827;
 }
 
+.judgement-score-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  margin-top: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.judgement-score {
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.judgement-score strong {
+  margin-right: 3px;
+  color: var(--ink);
+  font-family: 'ZCOOL QingKe HuangYou', sans-serif;
+  font-size: 34px;
+  font-weight: 400;
+  line-height: 0.9;
+}
+
+.judgement-bonus {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  padding: 0 10px;
+  color: var(--ink);
+  border: 1px solid var(--ink);
+  background: var(--warm);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.judgement-bonus[hidden] {
+  display: none;
+}
+
 .judgement-hint {
   min-height: 3.1em;
   margin: 17px 0 24px;

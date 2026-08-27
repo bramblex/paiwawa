@@ -109,6 +109,7 @@ describe('sparse street life', () => {
     expect(firstSubtitle.userData.text).toBe('遥遥领先');
     expect(firstSubtitle.material.map).toBeInstanceOf(THREE.CanvasTexture);
     expect(secondSubtitle.material.map).toBe(firstSubtitle.material.map);
+    expect(life.getVisibleGreetingSubtitles()).toEqual([]);
 
     // Omitted listener positions never trigger a greeting.
     life.update(0.1);
@@ -119,11 +120,13 @@ describe('sparse street life', () => {
     life.update(0, firstPosition);
     expect(spoken).toEqual(['Pedestrian-1']);
     expect(firstSubtitle.visible).toBe(true);
+    expect(life.getVisibleGreetingSubtitles()).toEqual([firstSubtitle]);
 
     life.update(0.2, firstPosition);
     expect(spoken).toHaveLength(1);
     life.update(0.2, firstPosition);
     expect(firstSubtitle.visible).toBe(false);
+    expect(life.getVisibleGreetingSubtitles()).toEqual([]);
     life.update(0, firstPosition);
     expect(spoken).toHaveLength(1);
 

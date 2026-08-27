@@ -1,10 +1,10 @@
-import type { CompositionResult } from './game/alignment';
 import type { GyroAimState } from './game/gyro-aim';
+import type { ScoredPhotoResult } from './game/photo-score';
 import { SECURITY_ALERT_CRITICAL_RATIO } from './game/security-alert';
 
 const successResultImageUrl = '/assets/results/public-toilet-sign-removed-success.png';
 const securityFailureImageUrl = '/assets/results/security-251-failure.png';
-const successResultTitle = '路牌已成功拆除';
+const successResultTitle = '路牌已成功 OTA';
 const securityFailureTitle = '喜提251';
 const resultTitleTypingInterval = 95;
 
@@ -68,9 +68,9 @@ export interface GameUI {
   setMuted: (muted: boolean) => void;
   setGyroState: (state: GyroAimState) => void;
   setSecurityAlert: (ratio: number, targeted: boolean, enabled: boolean) => void;
-  showJudgement: (imageDataUrl: string, result: CompositionResult) => void;
+  showJudgement: (imageDataUrl: string, result: ScoredPhotoResult) => void;
   hideJudgement: () => void;
-  showSettlement: (result: CompositionResult, meta: { levelNumber: number; total: number; name: string; isFinal: boolean }) => void;
+  showSettlement: (result: ScoredPhotoResult, meta: { levelNumber: number; total: number; name: string; isFinal: boolean }) => void;
   showSecurityFailure: (meta: { levelNumber: number; total: number; name: string }) => void;
   hideSettlement: () => void;
   setLevel: (levelNumber: number, total: number, name: string, clue: string) => void;
@@ -167,6 +167,10 @@ export function createGameUI(root: HTMLElement): GameUI {
           <div class="judgement-copy">
             <span class="judgement-kicker">本次照片判定</span>
             <h2 class="judgement-title">正在判定</h2>
+            <div class="judgement-score-row" aria-label="照片得分 0 分">
+              <span class="judgement-score"><strong>0</strong> 分</span>
+              <span class="judgement-bonus" hidden></span>
+            </div>
             <p class="judgement-hint"></p>
             <div class="judgement-meter" aria-hidden="true"><span></span></div>
             <div class="judgement-actions">
@@ -210,6 +214,9 @@ export function createGameUI(root: HTMLElement): GameUI {
   const securityAlertFill = requiredElement<HTMLElement>(root, '.security-alert-track span');
   const judgementImage = requiredElement<HTMLImageElement>(root, '.judgement-image');
   const judgementTitle = requiredElement<HTMLElement>(root, '.judgement-title');
+  const judgementScoreRow = requiredElement<HTMLElement>(root, '.judgement-score-row');
+  const judgementScore = requiredElement<HTMLElement>(root, '.judgement-score strong');
+  const judgementBonus = requiredElement<HTMLElement>(root, '.judgement-bonus');
   const judgementHint = requiredElement<HTMLElement>(root, '.judgement-hint');
   const judgementMeter = requiredElement<HTMLElement>(root, '.judgement-meter span');
   const judgementRetakeButton = requiredElement<HTMLButtonElement>(root, '.judgement-retake');
@@ -384,6 +391,15 @@ export function createGameUI(root: HTMLElement): GameUI {
       resultOverlay.setAttribute('aria-hidden', 'true');
       judgementImage.src = imageDataUrl;
       judgementTitle.textContent = result.success ? '拍照成功' : '拍照未成功';
+      judgementScore.textContent = String(result.points);
+      judgementBonus.hidden = result.bonusPoints === 0;
+      judgementBonus.textContent = result.bonusPoints > 0
+        ? `遥遥领先入镜 +${result.bonusPoints}`
+        : '';
+      judgementScoreRow.setAttribute(
+        'aria-label',
+        `照片得分 ${result.points} 分${result.bonusPoints > 0 ? `，遥遥领先入镜加 ${result.bonusPoints} 分` : ''}`,
+      );
       judgementHint.textContent = result.hint;
       judgementMeter.style.transform = `scaleX(${Math.max(0.08, result.score)})`;
       judgementOverlay.classList.toggle('is-success', result.success);
@@ -404,7 +420,8 @@ export function createGameUI(root: HTMLElement): GameUI {
       resultImage.src = successResultImageUrl;
       resultImage.alt = '工作人员正在拆除公共厕所路牌';
       setResultTitle(successResultTitle, true);
-      resultHint.textContent = `第 ${meta.levelNumber} / ${meta.total} 关 · ${meta.name} 已完成　${result.hint}`;
+      const bonusCopy = result.bonusPoints > 0 ? ` · 遥遥领先入镜 +${result.bonusPoints}` : '';
+      resultHint.textContent = `第 ${meta.levelNumber} / ${meta.total} 关 · ${meta.name} 已完成　照片得分 ${result.points} 分${bonusCopy}　${result.hint}`;
       resultMeter.style.transform = `scaleX(${Math.max(0.08, result.score)})`;
       resultOverlay.classList.remove('is-security-failure');
       resultOverlay.classList.add('is-success');
