@@ -263,7 +263,7 @@ const requestLevelTransition = async (requestedIndex: number): Promise<void> => 
     controls.clearMovement();
     ui.hideJudgement();
     ui.hideSettlement();
-    ui.showLevelLoading(targetLevel.number, LEVEL_COUNT, targetLevel.name);
+    ui.showLevelLoading(targetLevel.number, LEVEL_COUNT, targetLevel.name, targetLevel.subtitle);
     if (document.pointerLockElement) void document.exitPointerLock();
   }
 

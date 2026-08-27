@@ -47,4 +47,14 @@ describe('ten-level puzzle campaign', () => {
     expect(getNextLevelIndex(8)).toBe(9);
     expect(getNextLevelIndex(9)).toBeNull();
   });
+
+  it('gives every location an in-world intelligence brief and an actionable clue', () => {
+    for (const level of GAME_LEVELS) {
+      expect(level.subtitle.trim().length).toBeGreaterThan(12);
+      expect(level.clue.trim().length).toBeGreaterThan(4);
+    }
+    expect(GAME_LEVELS[0].subtitle).toContain('辱 WAWA');
+    expect(GAME_LEVELS[5].subtitle).toContain('蓝帽保安');
+    expect(GAME_LEVELS[9].subtitle).toContain('证据闭环');
+  });
 });

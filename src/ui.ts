@@ -1,6 +1,7 @@
 import type { GyroAimState } from './game/gyro-aim';
 import type { ScoredPhotoResult } from './game/photo-score';
 import { SECURITY_ALERT_CRITICAL_RATIO } from './game/security-alert';
+import { WORLD_COPY, getCampaignPhase } from './game/world';
 
 const successResultImageUrl = '/assets/results/public-toilet-sign-removed-success.png';
 const securityFailureImageUrl = '/assets/results/security-251-failure.png';
@@ -59,7 +60,7 @@ export interface GameUI {
   mobileMoveButtons: HTMLButtonElement[];
   setLoading: (ratio: number, label?: string) => void;
   setReady: () => void;
-  showLevelLoading: (levelNumber: number, total: number, name: string) => void;
+  showLevelLoading: (levelNumber: number, total: number, name: string, subtitle: string) => void;
   setLevelLoadProgress: (ratio: number, label?: string) => void;
   hideLevelLoading: () => void;
   setError: (message: string) => void;
@@ -82,22 +83,25 @@ export function createGameUI(root: HTMLElement): GameUI {
       <section class="loading-screen" aria-live="polite" aria-hidden="false">
         <div class="loading-brand">
           <span class="loading-title">拍哇哇</span>
+          <p class="loading-brief">${WORLD_COPY.loadingBrief}</p>
           <button class="loading-retry" type="button" hidden>重试载入</button>
         </div>
         <div class="loading-track" aria-hidden="true"><span class="loading-fill"></span></div>
-        <p class="loading-label">正在搭建街景 · 0%</p>
+        <p class="loading-label">${WORLD_COPY.loadingTitle} · 0%</p>
       </section>
 
       <section class="intro" aria-labelledby="intro-title">
         <div class="intro-copy">
-          <span class="intro-level">10 关透视解谜 · 找到每一关的拍摄角度</span>
+          <span class="intro-level">${WORLD_COPY.introStatus}</span>
           <h1 id="intro-title">拍哇哇</h1>
-          <p class="intro-lead">找到那个刚刚好的位置，让厕所路牌的箭头指向楼顶的 <strong>WAWA</strong>。</p>
+          <p class="intro-lead">${WORLD_COPY.introPremise}</p>
           <div class="brief-line" aria-label="任务目标">
-            <span>两块牌都要入镜<br />WAWA 要落在箭头下方</span>
+            <span>${WORLD_COPY.role}</span>
+            <span>${WORLD_COPY.evidenceFlow}</span>
+            <span>${WORLD_COPY.witnessBonus}</span>
           </div>
           <button class="start-button" type="button" disabled>
-            <span>开始取景</span>
+            <span>开始取证</span>
             <svg viewBox="0 0 28 18" aria-hidden="true"><path d="M1 9h23M17 2l7 7-7 7" /></svg>
           </button>
           <p class="start-note">桌面：WASD 移动 · 鼠标转向 · 空格拍照</p>
@@ -107,13 +111,14 @@ export function createGameUI(root: HTMLElement): GameUI {
 
       <section class="hud" aria-label="拍照界面">
         <div class="objective">
+          <span class="objective-phase">公开巡查 · 证据采集</span>
           <span class="objective-level">第 1 / 10 关 · 暮色直街</span>
           <span class="objective-text">让箭头指向 WAWA</span>
         </div>
         <div class="security-alert" role="meter" aria-label="保安警戒" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-hidden="true">
           <div class="security-alert-copy">
-            <span>保安警戒</span>
-            <strong>镜头正对公共厕所路牌时持续上升</strong>
+            <span>${WORLD_COPY.securityLabel}</span>
+            <strong>${WORLD_COPY.securityHint}</strong>
           </div>
           <div class="security-alert-track" aria-hidden="true"><span></span></div>
         </div>
@@ -165,7 +170,7 @@ export function createGameUI(root: HTMLElement): GameUI {
             <img class="judgement-image" src="/assets/signs/public-toilet-450m-front-texture.png" alt="本次拍摄的街景" />
           </div>
           <div class="judgement-copy">
-            <span class="judgement-kicker">本次照片判定</span>
+            <span class="judgement-kicker">${WORLD_COPY.judgementSystem}</span>
             <h2 class="judgement-title">正在判定</h2>
             <div class="judgement-score-row" aria-label="照片得分 0 分">
               <span class="judgement-score"><strong>0</strong> 分</span>
@@ -200,6 +205,7 @@ export function createGameUI(root: HTMLElement): GameUI {
 
   const loading = requiredElement<HTMLElement>(root, '.loading-screen');
   const loadingTitle = requiredElement<HTMLElement>(root, '.loading-title');
+  const loadingBrief = requiredElement<HTMLElement>(root, '.loading-brief');
   const loadingRetryButton = requiredElement<HTMLButtonElement>(root, '.loading-retry');
   const loadingFill = requiredElement<HTMLElement>(root, '.loading-fill');
   const loadingLabel = requiredElement<HTMLElement>(root, '.loading-label');
@@ -303,20 +309,21 @@ export function createGameUI(root: HTMLElement): GameUI {
     setLoading: (ratio, label) => {
       const percent = Math.round(Math.max(0, Math.min(1, ratio)) * 100);
       loadingFill.style.transform = `scaleX(${percent / 100})`;
-      loadingLabel.textContent = `${label ? `正在载入 ${label}` : '正在搭建街景'} · ${percent}%`;
+      loadingLabel.textContent = `${label ? `正在载入 ${label}` : WORLD_COPY.loadingTitle} · ${percent}%`;
     },
     setReady: () => {
       loadingFill.style.transform = 'scaleX(1)';
-      loadingLabel.textContent = '街景就绪 · 100%';
+      loadingLabel.textContent = '首处涉事点位就绪 · 100%';
       startButton.disabled = false;
       loadingRetryButton.hidden = true;
       hideLoadingScreen(320);
     },
-    showLevelLoading: (levelNumber, total, name) => {
+    showLevelLoading: (levelNumber, total, name, subtitle) => {
       cancelLoadingHide();
       loadingTitle.textContent = `第 ${levelNumber} / ${total} 关 · ${name}`;
+      loadingBrief.textContent = subtitle;
       loadingFill.style.transform = 'scaleX(0)';
-      loadingLabel.textContent = '正在搭建下一处街景 · 0%';
+      loadingLabel.textContent = '正在调取下一处涉事点位 · 0%';
       loading.classList.remove('is-hidden', 'has-error');
       loading.classList.add('is-level-transition');
       loading.setAttribute('aria-hidden', 'false');
@@ -325,11 +332,11 @@ export function createGameUI(root: HTMLElement): GameUI {
     setLevelLoadProgress: (ratio, label) => {
       const percent = Math.round(Math.max(0, Math.min(1, ratio)) * 100);
       loadingFill.style.transform = `scaleX(${percent / 100})`;
-      loadingLabel.textContent = `${label ? `正在载入 ${label}` : '正在搭建下一处街景'} · ${percent}%`;
+      loadingLabel.textContent = `${label ? `正在载入 ${label}` : '正在调取下一处涉事点位'} · ${percent}%`;
     },
     hideLevelLoading: () => {
       loadingFill.style.transform = 'scaleX(1)';
-      loadingLabel.textContent = '街景就绪 · 100%';
+      loadingLabel.textContent = '取证现场就绪 · 100%';
       loading.classList.remove('is-level-transition');
       hideLoadingScreen();
     },
@@ -390,15 +397,15 @@ export function createGameUI(root: HTMLElement): GameUI {
       resultOverlay.classList.remove('is-visible', 'is-success', 'is-security-failure');
       resultOverlay.setAttribute('aria-hidden', 'true');
       judgementImage.src = imageDataUrl;
-      judgementTitle.textContent = result.success ? '拍照成功' : '拍照未成功';
+      judgementTitle.textContent = result.success ? WORLD_COPY.successTitle : WORLD_COPY.failureTitle;
       judgementScore.textContent = String(result.points);
       judgementBonus.hidden = result.bonusPoints === 0;
       judgementBonus.textContent = result.bonusPoints > 0
-        ? `遥遥领先入镜 +${result.bonusPoints}`
+        ? `群众证言“遥遥领先” +${result.bonusPoints}`
         : '';
       judgementScoreRow.setAttribute(
         'aria-label',
-        `照片得分 ${result.points} 分${result.bonusPoints > 0 ? `，遥遥领先入镜加 ${result.bonusPoints} 分` : ''}`,
+        `照片得分 ${result.points} 分${result.bonusPoints > 0 ? `，群众证言遥遥领先加 ${result.bonusPoints} 分` : ''}`,
       );
       judgementHint.textContent = result.hint;
       judgementMeter.style.transform = `scaleX(${Math.max(0.08, result.score)})`;
@@ -418,10 +425,13 @@ export function createGameUI(root: HTMLElement): GameUI {
       judgementOverlay.classList.remove('is-visible', 'is-success');
       judgementOverlay.setAttribute('aria-hidden', 'true');
       resultImage.src = successResultImageUrl;
-      resultImage.alt = '工作人员正在拆除公共厕所路牌';
+      resultImage.alt = 'WAWA 公关工作人员正在 OTA 公共厕所路牌';
       setResultTitle(successResultTitle, true);
-      const bonusCopy = result.bonusPoints > 0 ? ` · 遥遥领先入镜 +${result.bonusPoints}` : '';
-      resultHint.textContent = `第 ${meta.levelNumber} / ${meta.total} 关 · ${meta.name} 已完成　照片得分 ${result.points} 分${bonusCopy}　${result.hint}`;
+      const bonusCopy = result.bonusPoints > 0 ? ` · 群众证言“遥遥领先” +${result.bonusPoints}` : '';
+      const responseCopy = meta.isFinal
+        ? '十处「辱 WAWA」点位已全部取证，WAWA 公关完成总清理。'
+        : '证据已通过复核，WAWA 公关已到场执行路牌 OTA。';
+      resultHint.textContent = `${responseCopy}　第 ${meta.levelNumber} / ${meta.total} 关 · ${meta.name}　照片得分 ${result.points} 分${bonusCopy}　${result.hint}`;
       resultMeter.style.transform = `scaleX(${Math.max(0.08, result.score)})`;
       resultOverlay.classList.remove('is-security-failure');
       resultOverlay.classList.add('is-success');
@@ -436,7 +446,7 @@ export function createGameUI(root: HTMLElement): GameUI {
       resultImage.src = securityFailureImageUrl;
       resultImage.alt = '蓝色制服、戴帽子的保安正在给玩家戴上手铐';
       setResultTitle(securityFailureTitle, true);
-      resultHint.textContent = `第 ${meta.levelNumber} / ${meta.total} 关 · ${meta.name}　抓获米猴／境外势力。`;
+      resultHint.textContent = `镜头长时间正对涉事路牌，你被蓝帽保安误判为布牌人员。系统通报：抓获米猴／境外势力，251 号流程已启动。　第 ${meta.levelNumber} / ${meta.total} 关 · ${meta.name}`;
       resultMeter.style.transform = 'scaleX(1)';
       resultOverlay.classList.remove('is-success');
       resultOverlay.classList.add('is-security-failure', 'is-visible');
@@ -451,6 +461,7 @@ export function createGameUI(root: HTMLElement): GameUI {
     },
     setLevel: (levelNumber, total, name, clue) => {
       const levelLabel = `第 ${levelNumber} / ${total} 关 · ${name}`;
+      requiredElement<HTMLElement>(root, '.objective-phase').textContent = getCampaignPhase(levelNumber);
       requiredElement<HTMLElement>(root, '.objective-level').textContent = levelLabel;
       requiredElement<HTMLElement>(root, '.objective-text').textContent = clue;
     },

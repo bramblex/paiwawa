@@ -116,6 +116,14 @@ button:focus-visible {
   letter-spacing: -0.02em;
 }
 
+.loading-brief {
+  max-width: 52ch;
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: clamp(15px, 1.3vw, 19px);
+  line-height: 1.72;
+}
+
 .loading-track {
   align-self: center;
   height: 2px;
@@ -174,7 +182,7 @@ button:focus-visible {
   inset: 0;
   z-index: 6;
   display: grid;
-  grid-template-columns: minmax(320px, 44vw) 1fr;
+  grid-template-columns: minmax(360px, 48vw) 1fr;
   pointer-events: none;
   background: linear-gradient(90deg, rgba(10, 15, 20, 0.93) 0%, rgba(10, 15, 20, 0.76) 34%, rgba(10, 15, 20, 0.05) 68%);
   transition: opacity 480ms ease, visibility 480ms ease;
@@ -217,8 +225,8 @@ button:focus-visible {
 }
 
 .intro-lead {
-  max-width: 29em;
-  margin: 36px 0 0;
+  max-width: 34em;
+  margin: 30px 0 0;
   color: rgba(255, 255, 255, 0.78);
   font-size: clamp(15px, 1.3vw, 19px);
   line-height: 1.72;
@@ -233,13 +241,19 @@ button:focus-visible {
   display: grid;
   grid-template-columns: 1fr;
   align-items: start;
-  width: min(100%, 340px);
-  margin: 28px 0 34px;
+  gap: 7px;
+  width: min(100%, 470px);
+  margin: 24px 0 30px;
   padding-top: 14px;
   border-top: 1px solid rgba(255, 255, 255, 0.22);
   color: rgba(255, 255, 255, 0.72);
   font-size: 13px;
   line-height: 1.55;
+}
+
+.brief-line span:first-child {
+  color: var(--paper);
+  font-weight: 700;
 }
 
 .start-button {
@@ -333,7 +347,7 @@ button:focus-visible {
 .objective-level {
   max-width: min(48vw, 320px);
   overflow: hidden;
-  color: var(--warm);
+  color: var(--muted);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 10px;
   font-weight: 700;
@@ -341,6 +355,16 @@ button:focus-visible {
   line-height: 1.2;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.objective-phase {
+  max-width: min(48vw, 320px);
+  color: var(--warm);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  line-height: 1.2;
 }
 
 .objective::before {
@@ -1109,8 +1133,9 @@ kbd {
   }
 
   .intro-copy {
-    justify-content: flex-end;
-    padding: 28px max(22px, env(safe-area-inset-left)) max(28px, env(safe-area-inset-bottom));
+    justify-content: flex-start;
+    overflow-y: auto;
+    padding: clamp(96px, 22vh, 180px) max(22px, env(safe-area-inset-left)) max(28px, env(safe-area-inset-bottom));
   }
 
   .intro h1 {
@@ -1119,11 +1144,12 @@ kbd {
 
   .intro-lead {
     max-width: 23em;
-    margin-top: 22px;
+    margin-top: 18px;
   }
 
   .brief-line {
-    margin: 20px 0 24px;
+    gap: 5px;
+    margin: 16px 0 20px;
   }
 
   .start-button {
@@ -1147,13 +1173,17 @@ kbd {
     max-width: calc(100vw - 150px);
   }
 
+  .objective-phase {
+    max-width: calc(100vw - 150px);
+  }
+
   .objective-text {
     max-width: calc(100vw - 168px);
     font-size: 14px;
   }
 
   .security-alert {
-    top: max(72px, calc(env(safe-area-inset-top) + 56px));
+    top: max(86px, calc(env(safe-area-inset-top) + 70px));
     width: calc(100vw - 40px);
   }
 
@@ -1357,6 +1387,8 @@ kbd {
 
 @media (max-height: 700px) and (min-width: 761px) {
   .intro-copy {
+    justify-content: flex-start;
+    overflow-y: auto;
     padding-top: 28px;
     padding-bottom: 28px;
   }
