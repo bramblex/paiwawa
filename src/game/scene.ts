@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+﻿import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
@@ -57,11 +57,11 @@ interface LevelSceneRuntime {
   decor: DecorRuntime;
 }
 
-const ROAD_MODEL_URL = '/assets/models/roads/road-straight.glb';
-const BACKGROUND_TOWER_URL = '/assets/models/buildings/building-skyscraper-b.glb';
-const BACKGROUND_BLOCK_URL = '/assets/models/buildings/building-f.glb';
-const TOILET_TEXTURE_URL = '/assets/signs/public-toilet-450m-front-texture.png';
-const WAWA_TEXTURE_URL = '/assets/signs/wawa-bamboo-cicada-lightbox-front.png';
+const ROAD_MODEL_URL = 'assets/models/roads/road-straight.glb';
+const BACKGROUND_TOWER_URL = 'assets/models/buildings/building-skyscraper-b.glb';
+const BACKGROUND_BLOCK_URL = 'assets/models/buildings/building-f.glb';
+const TOILET_TEXTURE_URL = 'assets/signs/public-toilet-450m-front-texture.png';
+const WAWA_TEXTURE_URL = 'assets/signs/wawa-bamboo-cicada-lightbox-front.png';
 const CAMERA_HEIGHT = 1.65;
 
 const tupleToVector = (value: Vector3Tuple): THREE.Vector3 =>

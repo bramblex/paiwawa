@@ -1,10 +1,10 @@
-import type { GyroAimState } from './game/gyro-aim';
+﻿import type { GyroAimState } from './game/gyro-aim';
 import type { ScoredPhotoResult } from './game/photo-score';
 import { SECURITY_ALERT_CRITICAL_RATIO } from './game/security-alert';
 import { WORLD_COPY, getCampaignPhase } from './game/world';
 
-const successResultImageUrl = '/assets/results/public-toilet-sign-removed-success.png';
-const securityFailureImageUrl = '/assets/results/security-251-failure.png';
+const successResultImageUrl = 'assets/results/public-toilet-sign-removed-success.png';
+const securityFailureImageUrl = 'assets/results/security-251-failure.png';
 const successResultTitle = '路牌已成功 OTA';
 const securityFailureTitle = '喜提251';
 const resultTitleTypingInterval = 95;
@@ -167,7 +167,7 @@ export function createGameUI(root: HTMLElement): GameUI {
       <section class="judgement-overlay" aria-live="polite" aria-label="构图判定" aria-hidden="true">
         <article class="judgement-card">
           <div class="judgement-photo-frame">
-            <img class="judgement-image" src="/assets/signs/public-toilet-450m-front-texture.png" alt="本次拍摄的街景" />
+            <img class="judgement-image" src="assets/signs/public-toilet-450m-front-texture.png" alt="本次拍摄的街景" />
           </div>
           <div class="judgement-copy">
             <span class="judgement-kicker">${WORLD_COPY.judgementSystem}</span>

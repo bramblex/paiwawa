@@ -1,0 +1,13 @@
+{
+  "asset": "public-toilet-sign-removed-success.png",
+  "sourceType": "user-provided",
+  "sourceName": "codex-clipboard-c85ec0e9-a735-4873-9ea0-62a70e4f6d3a.png",
+  "providedAt": "2026-08-26",
+  "dimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "sha256": "cf0cdaa86a4c628123d3d2b757470be3db727ebcd00d4198d2b5deb0aa6334a0",
+  "usage": "Success-only settlement image shown after the player completes the photography puzzle.",
+  "authorization": "Supplied by the user in this project thread for use in the game."
+}

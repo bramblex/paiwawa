@@ -1,4 +1,4 @@
-import type { StreetLifePaletteName, StreetLifeStyleOptions } from './street-life';
+﻿import type { StreetLifePaletteName, StreetLifeStyleOptions } from './street-life';
 
 export type Vector3Tuple = readonly [x: number, y: number, z: number];
 
@@ -83,7 +83,7 @@ export const GAME_LEVELS = [
       roadPaint: '#e8dcbf',
     },
     targetBuilding: {
-      modelUrl: '/assets/models/buildings/building-n.glb',
+      modelUrl: 'assets/models/buildings/building-n.glb',
       position: [6.3, 0, -21.7],
       scale: 2.2,
       rotationY: 0,
@@ -126,7 +126,7 @@ export const GAME_LEVELS = [
       roadPaint: '#a8d3df',
     },
     targetBuilding: {
-      modelUrl: '/assets/models/buildings/building-skyscraper-b.glb',
+      modelUrl: 'assets/models/buildings/building-skyscraper-b.glb',
       position: [6.5, 0, -23],
       scale: 1.55,
       rotationY: Math.PI / 2,
@@ -168,7 +168,7 @@ export const GAME_LEVELS = [
       roadPaint: '#f4d999',
     },
     targetBuilding: {
-      modelUrl: '/assets/models/buildings/building-j.glb',
+      modelUrl: 'assets/models/buildings/building-j.glb',
       position: [0.7, 0, -25],
       scale: 2.2,
       rotationY: 0,
@@ -210,7 +210,7 @@ export const GAME_LEVELS = [
       roadPaint: '#d1d6c2',
     },
     targetBuilding: {
-      modelUrl: '/assets/models/buildings/building-e.glb',
+      modelUrl: 'assets/models/buildings/building-e.glb',
       position: [-7, 0, -33],
       scale: 2.75,
       rotationY: -Math.PI / 2,
@@ -252,7 +252,7 @@ export const GAME_LEVELS = [
       roadPaint: '#72d8e7',
     },
     targetBuilding: {
-      modelUrl: '/assets/models/buildings/building-skyscraper-d.glb',
+      modelUrl: 'assets/models/buildings/building-skyscraper-d.glb',
       position: [6.5, 0, -32],
       scale: 0.7,
       rotationY: Math.PI / 2,
@@ -273,35 +273,35 @@ export const GAME_LEVELS = [
   {
     id: 'sunny-seaside', number: 6, name: '晴日海滨', subtitle: '清理行动外泄，蓝帽保安已站到路牌下方；镜头正对太久会触发身份误判。', clue: '沿左侧退到海风尽头。', themeKey: 'seaside',
     theme: { skyTop: '#2d86b5', skyHorizon: '#8fd4df', skyBottom: '#d9f1df', fog: '#9bcfd1', fogDensity: 0.012, hemisphereSky: '#d5f5ff', hemisphereGround: '#496b60', hemisphereIntensity: 2.8, sun: '#fff1b0', sunIntensity: 3.6, ground: '#6b8273', sidewalk: '#c5b99d', curb: '#e4d7b5', roadPaint: '#fff0c1' },
-    targetBuilding: { modelUrl: '/assets/models/buildings/building-c.glb', position: [7, 0, -30], scale: 2.25, rotationY: 0 },
+    targetBuilding: { modelUrl: 'assets/models/buildings/building-c.glb', position: [7, 0, -30], scale: 2.25, rotationY: 0 },
     toiletSign: { position: [-4.5, 0, -8], rotationY: 0 }, startPosition: [1, 1.65, 8], startLookTarget: [-7, 2.8, -11], movementBounds: { minX: -16, maxX: 9, minZ: -36, maxZ: 18 }, solutionPullback: 0.9, portraitSolutionPullback: 1.05,
     streetLife: { seed: 0x534541, palette: 'jade', pedestrianCount: 1, carCount: 1, style: { minZ: -34, maxZ: -1, pedestrianSpeed: 0.34, carSpeed: 0.9 } },
   },
   {
     id: 'golden-desert', number: 7, name: '金色沙漠', subtitle: '涉事组织把路牌转移到沙漠测试区，警戒范围更大，退路也更长。', clue: '继续后退，别被近处的热浪骗了。', themeKey: 'desert',
     theme: { skyTop: '#d4773d', skyHorizon: '#eeb56a', skyBottom: '#f8df9c', fog: '#d8a66c', fogDensity: 0.014, hemisphereSky: '#ffe0a5', hemisphereGround: '#73533c', hemisphereIntensity: 2.5, sun: '#fff0bd', sunIntensity: 3.8, ground: '#9b805d', sidewalk: '#c8a577', curb: '#e4c48d', roadPaint: '#f5db9b' },
-    targetBuilding: { modelUrl: '/assets/models/buildings/building-a.glb', position: [5.5, 0, -34], scale: 2.15, rotationY: Math.PI / 2 },
+    targetBuilding: { modelUrl: 'assets/models/buildings/building-a.glb', position: [5.5, 0, -34], scale: 2.15, rotationY: Math.PI / 2 },
     toiletSign: { position: [-4.55, 0, -15], rotationY: 0 }, startPosition: [-1.5, 1.65, 9], startLookTarget: [-7, 2.7, -9], movementBounds: { minX: -16, maxX: 9.5, minZ: -41, maxZ: 25 }, solutionPullback: 1.0, portraitSolutionPullback: 1.15,
     streetLife: { seed: 0x444553, palette: 'coral', pedestrianCount: 1, carCount: 1, style: { minZ: -39, maxZ: -3, pedestrianSpeed: 0.3, carSpeed: 0.82 } },
   },
   {
     id: 'snow-town', number: 8, name: '雪山小镇', subtitle: '低温让取证设备响应迟缓，蓝帽保安仍守在涉事路牌下方。', clue: '绕开雪堆，从右侧深处回望。', themeKey: 'snow',
     theme: { skyTop: '#42698d', skyHorizon: '#a8c9df', skyBottom: '#e9f3f4', fog: '#b8ced7', fogDensity: 0.019, hemisphereSky: '#dbeeff', hemisphereGround: '#53636b', hemisphereIntensity: 2.4, sun: '#fff9e8', sunIntensity: 2.7, ground: '#8b9999', sidewalk: '#d6dadd', curb: '#f1f3ed', roadPaint: '#f7fbf4' },
-    targetBuilding: { modelUrl: '/assets/models/buildings/building-h.glb', position: [7.5, 0, -31], scale: 2.3, rotationY: -Math.PI / 2 },
+    targetBuilding: { modelUrl: 'assets/models/buildings/building-h.glb', position: [7.5, 0, -31], scale: 2.3, rotationY: -Math.PI / 2 },
     toiletSign: { position: [-4.6, 0, -4], rotationY: 0 }, startPosition: [3.5, 1.65, 10], startLookTarget: [-7, 3, -10], movementBounds: { minX: -16, maxX: 10, minZ: -38, maxZ: 24 }, solutionPullback: 0.82, portraitSolutionPullback: 0.98,
     streetLife: { seed: 0x534e4f, palette: 'cobalt', pedestrianCount: 1, carCount: 1, style: { minZ: -36, maxZ: -2, pedestrianSpeed: 0.28, carSpeed: 0.78 } },
   },
   {
     id: 'autumn-highway', number: 9, name: '秋林公路', subtitle: '对方开始反向布置指向关系；必须跨过道路取证，同时避开保安锁定。', clue: '穿过道路，从右侧回望左方。', themeKey: 'autumn',
     theme: { skyTop: '#4b3540', skyHorizon: '#c8784f', skyBottom: '#e6b276', fog: '#aa725b', fogDensity: 0.018, hemisphereSky: '#e6b08a', hemisphereGround: '#4e3b32', hemisphereIntensity: 2.2, sun: '#ffd39b', sunIntensity: 2.8, ground: '#5b604c', sidewalk: '#98856b', curb: '#cdb58e', roadPaint: '#e8d5a5' },
-    targetBuilding: { modelUrl: '/assets/models/buildings/building-m.glb', position: [-7, 0, -33], scale: 1.15, rotationY: 0 },
+    targetBuilding: { modelUrl: 'assets/models/buildings/building-m.glb', position: [-7, 0, -33], scale: 1.15, rotationY: 0 },
     toiletSign: { position: [-4.65, 0, -18], rotationY: 0 }, startPosition: [4.5, 1.65, 7], startLookTarget: [7, 2.8, -10], movementBounds: { minX: -16, maxX: 10, minZ: -40, maxZ: 25 }, solutionPullback: 0.72, portraitSolutionPullback: 0.72,
     streetLife: { seed: 0x415554, palette: 'lantern', pedestrianCount: 1, carCount: 1, style: { minZ: -38, maxZ: -4, pedestrianSpeed: 0.3, carSpeed: 0.84 } },
   },
   {
     id: 'canyon-old-town', number: 10, name: '峡谷古镇', subtitle: '最后一处「辱 WAWA」点位藏在峡谷旧镇，完成证据闭环即可通知公关总清除。', clue: '走到峡谷深处，再从左侧回望。', themeKey: 'canyon',
     theme: { skyTop: '#3c2a35', skyHorizon: '#a7573e', skyBottom: '#d49a63', fog: '#7b5147', fogDensity: 0.021, hemisphereSky: '#d99a76', hemisphereGround: '#3b302c', hemisphereIntensity: 2.0, sun: '#ffc487', sunIntensity: 2.5, ground: '#66544a', sidewalk: '#8c7562', curb: '#c0a07b', roadPaint: '#e2c08a' },
-    targetBuilding: { modelUrl: '/assets/models/buildings/building-l.glb', position: [7.5, 0, -37], scale: 1.2, rotationY: Math.PI / 2 },
+    targetBuilding: { modelUrl: 'assets/models/buildings/building-l.glb', position: [7.5, 0, -37], scale: 1.2, rotationY: Math.PI / 2 },
     toiletSign: { position: [-4.7, 0, -21], rotationY: 0 }, startPosition: [-4, 1.65, 8.5], startLookTarget: [-8, 2.9, -11], movementBounds: { minX: -16, maxX: 11, minZ: -45, maxZ: 25 }, solutionPullback: 1.08, portraitSolutionPullback: 1.2,
     streetLife: { seed: 0x43414e, palette: 'plum', pedestrianCount: 1, carCount: 1, style: { minZ: -43, maxZ: -6, pedestrianSpeed: 0.26, carSpeed: 0.72 } },
   },
