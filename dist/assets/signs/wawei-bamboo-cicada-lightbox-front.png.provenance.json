@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "asset": "wawei-bamboo-cicada-lightbox-front.png",
+  "sha256": "c642a4df458a29912469a04f49512d6c657901b4fb0e98e7e4814533c61bd558",
+  "sourceType": "model-generated from user-supplied visual references",
+  "source": "/Users/brambles/.codex/generated_images/01a03cd2-91a9-7e30-8521-142145b157b8/exec-b1d85781-17f5-4bae-9e48-454ccb457d55.png",
+  "referenceInputs": [
+    "/var/folders/d7/xhqcv4gd7bvd5cfnb88mj_940000gn/T/codex-clipboard-77f0b23b-9e27-424c-ac2f-652d8676a446.png",
+    "/var/folders/d7/xhqcv4gd7bvd5cfnb88mj_940000gn/T/codex-clipboard-82895c61-360b-4df4-9291-e76d3119e6e1.png"
+  ],
+  "requirements": [
+    "Exact wordmark: WAWEI",
+    "Bamboo cicada logo",
+    "Front-facing square lightbox asset"
+  ],
+  "approvedByUser": true,
+  "recordedOn": "2026-08-26"
+}

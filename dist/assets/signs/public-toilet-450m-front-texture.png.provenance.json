@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "asset": "public-toilet-450m-front-texture.png",
+  "sha256": "6f1d5c18541426b2530e7a241127684fd46045a1211edab2a3c9bc96d94e7f16",
+  "sourceType": "user-approved generated source, locally derived",
+  "source": "/Users/brambles/.codex/generated_images/01a03cd2-91a9-7e30-8521-142145b157b8/exec-110f5141-4917-46e7-a3ff-2676a08160f8.png",
+  "referenceInput": "/var/folders/d7/xhqcv4gd7bvd5cfnb88mj_940000gn/T/codex-clipboard-f771d39f-1a3f-4797-802b-932b97239639.png",
+  "operations": [
+    "Removed the transparent exterior around the approved sign",
+    "Preserved the approved aspect ratio",
+    "No stretching or resampling"
+  ],
+  "approvedByUser": true,
+  "recordedOn": "2026-08-26"
+}

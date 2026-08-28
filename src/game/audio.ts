@@ -1,4 +1,4 @@
-type AudioTrack = {
+﻿type AudioTrack = {
   element: HTMLAudioElement;
   source: string;
   volume: number;
@@ -30,11 +30,11 @@ const createTrack = (
 
 /** Browser-safe music and one-shot effects, unlocked by the start button. */
 export class GameAudio {
-  private readonly bgm = createTrack('/assets/audio/bgm/calm-track-loop.ogg', 0.13, 'none', true);
-  private readonly shutter = createTrack('/assets/audio/sfx/camera-shutter.ogg', 0.62, 'auto');
-  private readonly success = createTrack('/assets/audio/sfx/success-jingle.ogg', 0.44, 'auto');
-  private readonly fail = createTrack('/assets/audio/sfx/fail-jingle.ogg', 0.28, 'auto');
-  private readonly greeting = createTrack('/assets/audio/voice/yaoyao-leading.mp3', 0.78, 'auto');
+  private readonly bgm = createTrack('assets/audio/bgm/calm-track-loop.ogg', 0.13, 'none', true);
+  private readonly shutter = createTrack('assets/audio/sfx/camera-shutter.ogg', 0.62, 'auto');
+  private readonly success = createTrack('assets/audio/sfx/success-jingle.ogg', 0.44, 'auto');
+  private readonly fail = createTrack('assets/audio/sfx/fail-jingle.ogg', 0.28, 'auto');
+  private readonly greeting = createTrack('assets/audio/voice/yaoyao-leading.mp3', 0.78, 'auto');
   private readonly tracks: AudioTrack[];
   private hasStarted = false;
   private mutedState = false;
